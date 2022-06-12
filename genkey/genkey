@@ -7,20 +7,6 @@ const { spawn } = require('child_process');
 
 const KEY_MATCH_RX = /ed20(\d{2})$/;
 
-const rundir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'spring83-genkey-'));
-const start = Number(new Date());
-let rounds = 0;
-
-function sighandle () {
-  console.error(`Aborted after ${rounds} rounds before finding a match (${Number(new Date()) - start})!`);
-  fs.rm(rundir, { recursive: true }, () => {
-    console.log('Cleaned up, done.');
-    process.exit();
-  });
-}
-
-['SIGINT', 'SIGHUP'].forEach(sig => process.on(sig, sighandle));
-
 async function spawnAsync (cmd, args) {
   return new Promise((resolve, reject) => {
     const sp = spawn(cmd, args, { detached: true });
@@ -52,7 +38,20 @@ function keyIsValid (keyString) {
 }
 
 async function main () {
-  console.log(`Temp run dir: ${rundir}`);
+  let rounds = 0;
+  const start = Number(new Date());
+  const rundir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'spring83-genkey-'));
+
+  function sighandle () {
+    console.error(`Aborted after ${rounds} rounds before finding a match (${Number(new Date()) - start})!`);
+    fs.rm(rundir, { recursive: true }, () => {
+      console.log('Cleaned up, done.');
+      process.exit();
+    });
+  }
+  
+  ['SIGINT', 'SIGHUP'].forEach(sig => process.on(sig, sighandle));
+
   const pkeyPem = path.join(rundir, 'pkey');
   const pkeyFile = `${pkeyPem}.parsed`;
   const pubKeyFile = `${pkeyPem}.pub`;
@@ -86,6 +85,7 @@ async function main () {
     ],
   ];
 
+  console.log(`Temp run dir: ${rundir}`);
   while (matchedKey === undefined) {
     ++rounds;
 
