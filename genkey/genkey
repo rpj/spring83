@@ -1,0 +1,124 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { spawn } = require('child_process');
+
+const KEY_MATCH_RX = /ed20(\d{2})$/;
+
+const rundir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'spring83-genkey-'));
+const start = Number(new Date());
+let rounds = 0;
+
+function sighandle () {
+  console.error(`Aborted after ${rounds} rounds before finding a match (${Number(new Date()) - start})!`);
+  fs.rm(rundir, { recursive: true }, () => {
+    console.log('Cleaned up, done.');
+    process.exit();
+  });
+}
+
+['SIGINT', 'SIGHUP'].forEach(sig => process.on(sig, sighandle));
+
+async function spawnAsync (cmd, args) {
+  return new Promise((resolve, reject) => {
+    const sp = spawn(cmd, args, { detached: true });
+
+    sp.on('close', (code) => resolve({ status: code }));
+    sp.on('error', reject);
+  });
+}
+
+function keyIsValid (keyString) {
+  const match = keyString.match(KEY_MATCH_RX);
+
+  if (match && match.length === 2) {
+    const lastTwoDigitsNum = Number.parseInt(match[1]);
+
+    if (Number.isNaN(lastTwoDigitsNum)) {
+      return false;
+    }
+
+    // "Furthermore, the final four characters, interpreted as a decimal number, must fall in the range 2022 .. 2099."
+    if (lastTwoDigitsNum < 22) {
+      return false;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+async function main () {
+  console.log(`Temp run dir: ${rundir}`);
+  const pkeyPem = path.join(rundir, 'pkey');
+  const pkeyFile = `${pkeyPem}.parsed`;
+  const pubKeyFile = `${pkeyPem}.pub`;
+
+  let matchedKey;
+
+  const CMDS_OPTS = [
+    [
+      'genpkey',
+      '-out',
+      pkeyPem,
+      '-algorithm',
+      'ed25519'
+    ],
+    [
+      'pkey',
+      '-in',
+      pkeyPem,
+      '-out',
+      pubKeyFile,
+      '-pubout'
+    ],
+    [
+      'asn1parse',
+      '-in',
+      pubKeyFile,
+      //'-strparse',
+      //'12',
+      '-out',
+      pkeyFile
+    ],
+  ];
+
+  while (matchedKey === undefined) {
+    ++rounds;
+
+    for (const cmdOpts of CMDS_OPTS) {
+      const r = await spawnAsync('openssl', cmdOpts);
+      if (r.status !== 0) {
+        throw new Error(`invocation "${cmdOpts.join(' ')}" failed: ${r.status}`)
+      }
+    }
+
+
+    const pubBuf = await fs.promises.readFile(pkeyFile);
+    const pkHex = pubBuf.slice(12).toString('hex');
+
+    if (keyIsValid(pkHex)) {
+      matchedKey = pkHex;
+    }
+  }
+
+  console.log(matchedKey);
+  console.log(rounds);
+  console.log(Number(new Date()) - start);
+  console.log((await fs.promises.readFile(pkeyPem)).toString('utf8'));
+  console.log((await fs.promises.readFile(pubKeyFile)).toString('utf8'));
+
+  await fs.promises.rm(rundir, { recursive: true });
+}
+
+if (require.main === module) {
+  main();
+}
+else {
+  module.exports = {
+    keyIsValid
+  };
+}
