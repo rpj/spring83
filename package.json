@@ -4,13 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "semistandard --fix --verbose findkey putnew serve *.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@noble/ed25519": "^1.6.0",
     "fastify": "^4.0.1",
+    "mustache": "^4.2.0",
     "undici": "^5.4.0"
+  },
+  "devDependencies": {
+    "semistandard": "^16.0.1"
   }
 }

@@ -1,0 +1,15 @@
+services:
+  serve:
+    build: &default-build-spec
+      context: .
+      dockerfile: Dockerfile
+      target: serve
+    network_mode: "host"
+    volumes: &default-logs-bind
+      - type: bind
+        source: ${SPRING83_CONTENT_DIR_HOST:?"Must define SPRING83_CONTENT_DIR_HOST as the absolute path to logs on the host."}
+        target: /content
+
+volumes:
+  content:
+    external: true

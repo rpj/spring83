@@ -1,32 +1,10 @@
 #!/usr/bin/env node
 
 const ed = require('@noble/ed25519');
+const { pubKeyIsValid } = require('./common');
 
-const KEY_MATCH_RX = /ed20(\d{2})$/;
-
-function pubKeyIsValid (pubKeyData) {
-  const match = Buffer.from(pubKeyData).toString('hex').match(KEY_MATCH_RX);
-
-  if (match && match.length === 2) {
-    const lastTwoDigitsNum = Number.parseInt(match[1]);
-
-    if (Number.isNaN(lastTwoDigitsNum)) {
-      return false;
-    }
-
-    // "Furthermore, the final four characters, interpreted as a decimal number, must fall in the range 2022 .. 2099."
-    if (lastTwoDigitsNum < 22) {
-      return false;
-    }
-
-    return true;
-  }
-
-  return false;
-}
-
-async function findMatchingKey (rounds = 0, matchedResolver) {
-  const next = findMatchingKey.bind(null, rounds + 1);
+async function findMatchingKey (strict, rounds = 0, matchedResolver) {
+  const next = findMatchingKey.bind(null, strict, rounds + 1);
 
   if (rounds === 0) {
     return new Promise((resolve) => next(resolve));
@@ -35,7 +13,7 @@ async function findMatchingKey (rounds = 0, matchedResolver) {
   const privateKey = ed.utils.randomPrivateKey();
   const publicKey = await ed.getPublicKey(privateKey);
 
-  if (pubKeyIsValid(publicKey)) {
+  if (pubKeyIsValid(publicKey, strict)) {
     return matchedResolver({ rounds, matched: { privateKey, publicKey } });
   }
 
@@ -47,7 +25,7 @@ async function main () {
 
   ['SIGINT', 'SIGHUP'].forEach(sig => process.on(sig, () => process.exit()));
 
-  const { rounds, matched } = await findMatchingKey();
+  const { rounds, matched } = await findMatchingKey(process.argv.length > 2 && process.argv[2] === '--strict');
 
   for (const [type, keyData] of Object.entries(matched)) {
     console.log(type, Buffer.from(keyData).toString('hex'));

@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
+const path = require('path');
 const app = require('fastify')({ logger: true });
 const ed = require('@noble/ed25519');
-const { constants } = require('./common');
+const mustache = require('mustache');
+const { constants, pubKeyHexIsValid } = require('./common');
 
 const expectPutHeaders = {
   'content-type': constants.contentType,
@@ -20,7 +23,7 @@ const expectPutHeaders = {
 
     const parsedDate = new Date(parsed);
 
-    if (parsedDate > new Date()) {
+    if (parsedDate.getUTCSeconds() > new Date(Date.now() + 6000).getUTCSeconds()) {
       return 400;
     }
 
@@ -48,6 +51,12 @@ const expectPutHeaders = {
   }
 };
 
+const initialPutChecks = {
+  'missing body or key': (req) => !req.body || !req.params.key,
+  'invalid pub key': (req) => !pubKeyHexIsValid(req.params.key, true),
+  'missing header(s)': (req) => !allExpectedHeadersExist(expectPutHeaders, req)
+};
+
 async function validateHeader (context, [header, val]) {
   const validator = expectPutHeaders?.[header];
   return [header, val, await {
@@ -60,18 +69,44 @@ function allExpectedHeadersExist (expectedMap, req) {
   return Object.keys(expectedMap).every(k => Boolean(req.headers[k]));
 }
 
+function applyGenericGETReplyHeaders (reply) {
+  reply.type(constants.contentType);
+  reply.header('Spring-Version', constants.protocolVersion);
+  reply.header('Content-Security-Policy', "script-src 'none';");
+}
+
+async function findKnownKeys (contentDir) {
+  return (await Promise.all((await fs.promises.readdir(contentDir)).filter((p) => {
+    const parsed = path.parse(p);
+    return parsed.name.match(constants.keyMatchRegex) && parsed.ext === '.html';
+  })
+    .map(path.parse)
+    .map(async (pObj) => ([
+      pObj.name,
+      (await fs.promises.readFile(path.join(contentDir, pObj.name + pObj.ext))).toString('utf8'),
+      JSON.parse(await fs.promises.readFile(path.join(contentDir, pObj.name + '.json')))
+    ]))))
+    .reduce((a, [key, body, metadata]) => ({ [key]: { body, metadata }, ...a }), {});
+}
+
 async function main () {
+  const rootTmpl = (await fs.promises.readFile(path.join(__dirname, 'root.tmpl.html'))).toString('utf8');
+  const contentDir = path.resolve(process.env.SPRING83_CONTENT_DIR || path.join(__dirname, '.content'));
+  await fs.promises.mkdir(contentDir, { recursive: true });
+
+  const knownKeys = await findKnownKeys(contentDir);
+  app.log.info(`Found ${Object.keys(knownKeys).length} pre-existing boards`);
+
+  const getCurrentDifficultyFactor = () => (Object.keys(knownKeys).length / 10_000_000) ** 4;
+
   app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
 
   app.put('/:key', async (req, reply) => {
-    if (!req.body || !req.params.key) {
-      app.log.warn(`missing body or key`);
-      reply.code(400);
-      return;
-    }
+    const putCheckRes = Object.entries(initialPutChecks)
+      .find(([, checkFunc]) => checkFunc(req));
 
-    if (!allExpectedHeadersExist(expectPutHeaders, req)) {
-      app.log.warn(`missing header(s)`);
+    if (putCheckRes) {
+      app.log.warn(putCheckRes[0]);
       reply.code(400);
       return;
     }
@@ -91,7 +126,53 @@ async function main () {
 
       app.log.warn(`bad header '${invalidName}: ${invalidValue}'`);
     }
+
+    const writeOpts = { mode: 0o660 };
+    const pathPrefix = path.join(contentDir, req.params.key);
+    const metadata = {
+      headers: req.headers,
+      ingest: new Date()
+    };
+
+    await fs.promises.writeFile(`${pathPrefix}.html`, req.body, writeOpts);
+    await fs.promises.writeFile(`${pathPrefix}.json`, JSON.stringify(metadata), writeOpts);
+
+    knownKeys[req.params.key] = {
+      body: req.body,
+      metadata
+    };
+
+    app.log.info(`New board posted! ${req.params.key}`);
   });
+
+  app.get('/:key', async (req, reply) => {
+    if (!pubKeyHexIsValid(req.params.key, true)) {
+      app.log.warn('invalid key');
+      reply.code(400);
+      return;
+    }
+
+    applyGenericGETReplyHeaders(reply);
+    return knownKeys[req.params.key].body;
+  });
+
+  app.get('/', async (req, reply) => {
+    const keys = Object.keys(knownKeys);
+
+    applyGenericGETReplyHeaders(reply);
+    reply.header('Spring-Difficulty', getCurrentDifficultyFactor());
+
+    const random_board_key = keys[Math.floor(Math.random() * keys.length)]; // eslint-disable-line camelcase
+    return mustache.render(rootTmpl, {
+      random_board_key,
+      random_board_key_display: `${random_board_key.slice(0, 10)}...${random_board_key.slice(-6)}`
+    });
+  });
+
+  ['SIGINT', 'SIGTERM'].forEach((sig) => process.on(sig, () => {
+    console.log('Stopping...');
+    process.exit(0);
+  }));
 
   await app.listen({
     port: process.env.SPRING83_BIND_PORT || 1783,

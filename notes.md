@@ -1,12 +1,7 @@
-> *key*: a public key on the Ed25519 curve, formatted as 64 hex characters.
-- https://github.com/robinsloan/spring-83-spec/blob/main/draft-20220609.md?plain=1#L43
-
-OpenSSL versions prior to 3.0 cannot sign with ed25519 key pairs. Nor can node.js' crypto library. I don't think they are (yet) suitable for this use case because support is not yet widely available to create signatures with them.
-
 > `/ed[0-9]{4}$/`
 - https://github.com/robinsloan/spring-83-spec/blob/main/draft-20220609.md?plain=1#L74
 
-`/ed20(\d{2})$/`
+`/[a-f0-9]{58}ed20(\d{2})$/`
 
 > The client must verify that the `<signature>` is valid for `<key>` and `<board>` before processing or displaying the board. If the signature is not valid, the client must drop the response and remove the server from its list of trustworthy peers.
 >
