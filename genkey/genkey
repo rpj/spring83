@@ -1,23 +1,11 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const { spawn } = require('child_process');
+const ed = require('@noble/ed25519');
 
 const KEY_MATCH_RX = /ed20(\d{2})$/;
 
-async function spawnAsync (cmd, args) {
-  return new Promise((resolve, reject) => {
-    const sp = spawn(cmd, args, { detached: true });
-
-    sp.on('close', (code) => resolve({ status: code }));
-    sp.on('error', reject);
-  });
-}
-
-function keyIsValid (keyString) {
-  const match = keyString.match(KEY_MATCH_RX);
+function pubKeyIsValid (pubKeyData) {
+  const match = Buffer.from(pubKeyData).toString('hex').match(KEY_MATCH_RX);
 
   if (match && match.length === 2) {
     const lastTwoDigitsNum = Number.parseInt(match[1]);
@@ -37,88 +25,43 @@ function keyIsValid (keyString) {
   return false;
 }
 
+async function findMatchingKey (rounds = 0, matchedResolver) {
+  const next = findMatchingKey.bind(null, rounds + 1);
+
+  if (rounds === 0) {
+    return new Promise((resolve) => next(resolve));
+  }
+
+  const privateKey = ed.utils.randomPrivateKey();
+  const publicKey = await ed.getPublicKey(privateKey);
+
+  if (pubKeyIsValid(publicKey)) {
+    return matchedResolver({ rounds, matched: { privateKey, publicKey } });
+  }
+
+  setTimeout(next.bind(null, matchedResolver), 0);
+}
+
 async function main () {
-  let rounds = 0;
   const start = Number(new Date());
-  const rundir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'spring83-genkey-'));
 
-  function sighandle () {
-    console.error(`Aborted after ${rounds} rounds before finding a match (${Number(new Date()) - start})!`);
-    fs.rm(rundir, { recursive: true }, () => {
-      console.log('Cleaned up, done.');
-      process.exit();
-    });
-  }
-  
-  ['SIGINT', 'SIGHUP'].forEach(sig => process.on(sig, sighandle));
+  ['SIGINT', 'SIGHUP'].forEach(sig => process.on(sig, () => process.exit()));
 
-  const pkeyPem = path.join(rundir, 'pkey');
-  const pkeyFile = `${pkeyPem}.parsed`;
-  const pubKeyFile = `${pkeyPem}.pub`;
+  const { rounds, matched } = await findMatchingKey();
 
-  let matchedKey;
-
-  const CMDS_OPTS = [
-    [
-      'genpkey',
-      '-out',
-      pkeyPem,
-      '-algorithm',
-      'ed25519'
-    ],
-    [
-      'pkey',
-      '-in',
-      pkeyPem,
-      '-out',
-      pubKeyFile,
-      '-pubout'
-    ],
-    [
-      'asn1parse',
-      '-in',
-      pubKeyFile,
-      //'-strparse',
-      //'12',
-      '-out',
-      pkeyFile
-    ],
-  ];
-
-  console.log(`Temp run dir: ${rundir}`);
-  while (matchedKey === undefined) {
-    ++rounds;
-
-    for (const cmdOpts of CMDS_OPTS) {
-      const r = await spawnAsync('openssl', cmdOpts);
-      if (r.status !== 0) {
-        throw new Error(`invocation "${cmdOpts.join(' ')}" failed: ${r.status}`)
-      }
-    }
-
-
-    const pubBuf = await fs.promises.readFile(pkeyFile);
-    const pkHex = pubBuf.slice(12).toString('hex');
-
-    if (keyIsValid(pkHex)) {
-      matchedKey = pkHex;
-    }
+  for (const [type, keyData] of Object.entries(matched)) {
+    console.log(type, Buffer.from(keyData).toString('hex'));
   }
 
-  console.log(matchedKey);
   console.log(rounds);
   console.log(Number(new Date()) - start);
-  console.log((await fs.promises.readFile(pkeyPem)).toString('utf8'));
-  console.log((await fs.promises.readFile(pubKeyFile)).toString('utf8'));
-
-  await fs.promises.rm(rundir, { recursive: true });
 }
 
 if (require.main === module) {
   main();
-}
-else {
+} else {
   module.exports = {
-    keyIsValid
+    pubKeyIsValid,
+    findMatchingKey
   };
 }
