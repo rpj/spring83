@@ -1,0 +1,32 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const ed = require('@noble/ed25519');
+const { fetch } = require('undici');
+const { constants } = require('./common');
+
+if (process.argv.length !== 5) {
+  throw new Error('usage: host privKeyHex htmlFile');
+}
+
+const [,, host, privKeyHex, htmlFile] = process.argv;
+const htmlFileBytes = fs.readFileSync(htmlFile);
+
+ed.sign(htmlFileBytes, privKeyHex).then(async (sigBytes) => {
+  const sigHex = Buffer.from(sigBytes).toString('hex');
+  const pubKeyHex = Buffer.from(await ed.getPublicKey(privKeyHex)).toString('hex');
+  const fetchRes = await fetch(`${host}/${pubKeyHex}`, {
+    method: 'PUT',
+    headers: {
+      'content-type': constants.contentType,
+      'spring-version': constants.protocolVersion,
+      'if-unmodified-since': new Date().toISOString(),
+      authorization: `${constants.authorizationPreamble}=${sigHex}`
+    },
+    body: htmlFileBytes
+  });
+
+  if (!fetchRes.ok) {
+    console.error(`ERROR: ${fetchRes.status} "${fetchRes.statusText}"`);
+  }
+});

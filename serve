@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+
+const app = require('fastify')({ logger: true });
+const ed = require('@noble/ed25519');
+const { constants } = require('./common');
+
+const expectPutHeaders = {
+  'content-type': constants.contentType,
+  'spring-version': constants.protocolVersion,
+  'if-unmodified-since': (v, context) => {
+    if (context?.multipleUnmodifiedSinceHeaders) {
+      return 400;
+    }
+
+    const parsed = Date.parse(v);
+
+    if (Number.isNaN(parsed)) {
+      return 409;
+    }
+
+    const parsedDate = new Date(parsed);
+
+    if (parsedDate > new Date()) {
+      return 400;
+    }
+
+    context.multipleUnmodifiedSinceHeaders = 1;
+    context.ifUnmodifiedSinceUNIXTime = parsed;
+  },
+  authorization: async (v, context) => {
+    if (v.indexOf('=') === -1) {
+      return 400;
+    }
+
+    const [preamble, sigHex] = v.split('=');
+
+    if (preamble !== constants.authorizationPreamble) {
+      return 400;
+    }
+
+    return !(await ed.verify(sigHex, Buffer.from(context.body), context.key));
+  },
+  'content-length': (v) => {
+    const vp = Number.parseInt(v);
+    if (!Number.isNaN(vp) && vp > constants.maximumContentLength) {
+      return 413;
+    }
+  }
+};
+
+async function validateHeader (context, [header, val]) {
+  const validator = expectPutHeaders?.[header];
+  return [header, val, await {
+    string: async () => !(val === validator),
+    function: async () => validator(val, context)
+  }?.[typeof validator]?.()];
+}
+
+function allExpectedHeadersExist (expectedMap, req) {
+  return Object.keys(expectedMap).every(k => Boolean(req.headers[k]));
+}
+
+async function main () {
+  app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
+
+  app.put('/:key', async (req, reply) => {
+    if (!req.body || !req.params.key) {
+      app.log.warn(`missing body or key`);
+      reply.code(400);
+      return;
+    }
+
+    if (!allExpectedHeadersExist(expectPutHeaders, req)) {
+      app.log.warn(`missing header(s)`);
+      reply.code(400);
+      return;
+    }
+
+    const validationContext = { body: req.body, key: req.params.key };
+    const firstInvalid = (await Promise.all(Object.entries(req.headers)
+      .map(validateHeader.bind(null, validationContext))))
+      .find(([,, invalid]) => Boolean(invalid));
+
+    if (firstInvalid) {
+      const [invalidName, invalidValue, validatorResult] = firstInvalid;
+
+      reply.code(400);
+      if (typeof validatorResult === 'number') {
+        reply.code(validatorResult);
+      }
+
+      app.log.warn(`bad header '${invalidName}: ${invalidValue}'`);
+    }
+  });
+
+  await app.listen({
+    port: process.env.SPRING83_BIND_PORT || 1783,
+    host: process.env.SPRING83_BIND_HOST || '0.0.0.0'
+  });
+}
+
+main();
