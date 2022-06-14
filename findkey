@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
+const path = require('path');
 const ed = require('@noble/ed25519');
 const { pubKeyIsValid } = require('./common');
 
@@ -26,13 +28,17 @@ async function main () {
   ['SIGINT', 'SIGHUP'].forEach(sig => process.on(sig, () => process.exit()));
 
   const { rounds, matched } = await findMatchingKey(process.argv.length > 2 && process.argv[2] === '--strict');
+  const outLines = Object.entries(matched).map(([type, keyData]) => [type, Buffer.from(keyData).toString('hex')].join(' '));
 
-  for (const [type, keyData] of Object.entries(matched)) {
-    console.log(type, Buffer.from(keyData).toString('hex'));
-  }
+  outLines.push(rounds);
+  outLines.push(Number(new Date()) - start);
 
-  console.log(rounds);
-  console.log(Number(new Date()) - start);
+  const outStr = outLines.join('\n');
+  const outFileName = path.join(__dirname, Buffer.from(matched.publicKey).toString('hex').slice(0, 16) + '.txt');
+
+  console.log(outStr);
+  await fs.promises.writeFile(outFileName, outStr);
+  console.log(`\nWrote: ${outFileName}`);
 }
 
 if (require.main === module) {
