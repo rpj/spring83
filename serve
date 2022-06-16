@@ -2,12 +2,13 @@
 
 const fs = require('fs');
 const path = require('path');
-const app = require('fastify')({ logger: true });
+const cheerio = require('cheerio');
 const ed = require('@noble/ed25519');
 const mustache = require('mustache');
+const app = require('fastify')({ logger: true });
 const { constants, pubKeyHexIsValid } = require('./common');
 
-const expectPutHeaders = {
+const expectPutHeaders = Object.freeze({
   'content-type': constants.contentType,
   'spring-version': constants.protocolVersion,
   'if-unmodified-since': (v, context) => {
@@ -18,12 +19,13 @@ const expectPutHeaders = {
     const parsed = Date.parse(v);
 
     if (Number.isNaN(parsed)) {
-      return 409;
+      return 400;
     }
 
     const parsedDate = new Date(parsed);
+    const checkTime = new Date(Date.now() + constants.unmodifiedSinceTimeFudgeMs);
 
-    if (parsedDate.getUTCSeconds() > new Date(Date.now() + 6000).getUTCSeconds()) {
+    if (parsedDate > checkTime) {
       return 400;
     }
 
@@ -49,13 +51,18 @@ const expectPutHeaders = {
       return 413;
     }
   }
-};
+});
 
-const initialPutChecks = {
+const initialPutChecks = Object.freeze({
   'missing body or key': (req) => !req.body || !req.params.key,
   'invalid pub key': (req) => !pubKeyHexIsValid(req.params.key, true),
-  'missing header(s)': (req) => !allExpectedHeadersExist(expectPutHeaders, req)
-};
+  'missing header(s)': (req) => !allExpectedHeadersExist(expectPutHeaders, req),
+  'missing required <meta> tag attribute(s)': (req) => !documentHasRequiredMeta(req)
+});
+
+function documentHasRequiredMeta (req) {
+  return Date.parse(cheerio.load(req.body)('meta[http-equiv=last-modified]')?.attr()?.content);
+}
 
 async function validateHeader (context, [header, val]) {
   const validator = expectPutHeaders?.[header];
@@ -69,10 +76,23 @@ function allExpectedHeadersExist (expectedMap, req) {
   return Object.keys(expectedMap).every(k => Boolean(req.headers[k]));
 }
 
-function applyGenericGETReplyHeaders (reply) {
+function applyGenericGETReplyHeaders (reply, isRoot = false) {
   reply.type(constants.contentType);
   reply.header('Spring-Version', constants.protocolVersion);
-  reply.header('Content-Security-Policy', "script-src 'none';");
+
+  if (!isRoot) {
+    reply.header('Content-Security-Policy', Object.entries({
+      none: ['script-src', 'script-src-attr', 'script-src-elem',
+        'child-src', 'frame-src', 'prefetch-src', ' object-src'],
+      'data:': ['img-src']
+    }).reduce((a, [policyValue, directivesList]) => {
+      let emitValue = policyValue;
+      if (policyValue.indexOf(':') === -1) {
+        emitValue = `'${policyValue}'`;
+      }
+      return (a += directivesList.map((directive) => `${directive} ${emitValue};`).join(' ') + ' ');
+    }, ''));
+  }
 }
 
 async function findKnownKeys (contentDir) {
@@ -97,7 +117,7 @@ async function main () {
   const knownKeys = await findKnownKeys(contentDir);
   app.log.info(`Found ${Object.keys(knownKeys).length} pre-existing boards`);
 
-  const getCurrentDifficultyFactor = () => (Object.keys(knownKeys).length / 10_000_000) ** 4;
+  const getCurrentDifficultyFactor = () => (Object.keys(knownKeys).length / constants.maximumNumberOfBoards) ** 4;
 
   app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
 
@@ -109,6 +129,22 @@ async function main () {
       app.log.warn(putCheckRes[0]);
       reply.code(400);
       return;
+    }
+
+    const pathPrefix = path.join(contentDir, req.params.key);
+
+    try {
+      const { headers } = JSON.parse(await (await fs.promises.readFile(`${pathPrefix}.json`)).toString('utf8'));
+      const metaCheck = documentHasRequiredMeta(req); // check in initialPutChecks prior, so will have a value
+
+      if (metaCheck <= Date.parse(headers['if-unmodified-since'])) {
+        reply.code(409);
+        return;
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        throw err;
+      }
     }
 
     const validationContext = { body: req.body, key: req.params.key };
@@ -125,10 +161,10 @@ async function main () {
       }
 
       app.log.warn(`bad header '${invalidName}: ${invalidValue}'`);
+      return;
     }
 
     const writeOpts = { mode: 0o660 };
-    const pathPrefix = path.join(contentDir, req.params.key);
     const metadata = {
       headers: req.headers,
       ingest: new Date()
@@ -157,15 +193,13 @@ async function main () {
   });
 
   app.get('/', async (req, reply) => {
-    const keys = Object.keys(knownKeys);
-
-    applyGenericGETReplyHeaders(reply);
+    applyGenericGETReplyHeaders(reply, true);
     reply.header('Spring-Difficulty', getCurrentDifficultyFactor());
-
-    const random_board_key = keys[Math.floor(Math.random() * keys.length)]; // eslint-disable-line camelcase
     return mustache.render(rootTmpl, {
-      random_board_key,
-      random_board_key_display: `${random_board_key.slice(0, 10)}...${random_board_key.slice(-6)}`
+      boards: Object.keys(knownKeys).map((key) => ({
+        key,
+        key_display: key.slice(0, 16)
+      }))
     });
   });
 

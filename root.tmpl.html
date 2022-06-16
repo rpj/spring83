@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>spring83.rpjios.com</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spring '83</title>
 
     <style type="text/css">
     html {
@@ -14,17 +15,30 @@
       top: 0px;
       right: 0px;
     }
+
+    #key {
+      position: absolute;
+      bottom: 10px;
+    }
     </style>
   </head>
   <body>
-    <h1><a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring 83</a></h1>
+    <h1>A <a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring '83</a> server</h1>
 
-    A random board for you: <a href="/{{ random_board_key }}">{{ random_board_key_display }}</a>
+    <h3>Boards:</h3>
+    <ul>
+    {{ #boards }}
+      <div>
+        <li><a href="/{{ key }}">{{ key_display }}</a></li>
+      </div>
+    {{ /boards }}
+    </ul>
 
-    <div id="src_link">
-      <a href="https://github.com/rpj/spring83" target="_blank">
-        <img loading="lazy" width="149" height="149" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_gray_6d6d6d.png?resize=149%2C149" class="attachment-full size-full" alt="Fork me on GitHub" data-recalc-dims="1">
-      </a>
+    <div>
+      Want to <a href="https://github.com/rpj/spring83#putnew">post</a>? <a href="https://github.com/rpj/spring83#findkey">Find</a> a keypair!
+    </div>
+    <div id="key">
+      Source on <a href="https://github.com/rpj/spring83">GitHub</a>. 
     </div>
   </body>
 </html>

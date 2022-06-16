@@ -1,5 +1,7 @@
 An implementation of the [Spring 83 protocol](https://github.com/robinsloan/spring-83-spec).
 
+Very much a work-in-progress. This was built in reference to [`draft-20220609.md`@`1a37b2fb`](https://github.com/robinsloan/spring-83-spec/blob/1a37b2fbf2a54610905a331a2d0e854c05c9843b/draft-20220609.md).
+
 ## Setup
 
 Requires [node.js](https://nodejs.org/) 16 or greater.
@@ -32,6 +34,8 @@ $ putnew host privKeyHex htmlFile
 ```
 
 Puts a new board with HTML source `htmlFile` to `host` with private key (in hex) `privKeyHex`.
+
+Will insert the required `<meta http-equiv="last-modified" content="...">` tag, with the appropriate `content` value, if it doesn't exist in the document already.
 
 ### `serve`
 

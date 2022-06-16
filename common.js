@@ -1,9 +1,11 @@
 const constants = Object.freeze({
   maximumContentLength: 2217,
+  maximumNumberOfBoards: 10_000_000,
   protocolVersion: '83',
   contentType: 'text/html;charset=utf-8',
   authorizationPreamble: 'Spring-83 Signature',
-  keyMatchRegex: /[a-f0-9]{58}ed20(\d{2})$/
+  keyMatchRegex: /[a-f0-9]{58}ed20(\d{2})$/,
+  unmodifiedSinceTimeFudgeMs: 6000
 });
 
 // 'strict' only allows keys valid *this year* to match

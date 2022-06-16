@@ -41,11 +41,4 @@ async function main () {
   console.log(`\nWrote: ${outFileName}`);
 }
 
-if (require.main === module) {
-  main();
-} else {
-  module.exports = {
-    pubKeyIsValid,
-    findMatchingKey
-  };
-}
+main();
