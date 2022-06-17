@@ -20,7 +20,7 @@ const constants = Object.freeze({
   rootTemplateName: 'root.tmpl.html',
   defaultContentPath: '.content',
   defaultFQDN: 'example.com',
-  strictVerification: false
+  strictVerification: true
 });
 
 // 'strict' only allows keys that are usable *now* to match

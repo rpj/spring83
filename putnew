@@ -29,7 +29,7 @@ ed.sign(htmlFileBytes, privKeyHex).then(async (sigBytes) => {
     method: 'PUT',
     headers: {
       'content-type': constants.contentType,
-      'spring-version': constants.protocolVersion,
+      [constants.headerNames.version]: constants.protocolVersion,
       'if-unmodified-since': unmodifiedSince,
       authorization: `${constants.authorizationPreamble}=${sigHex}`
     },
