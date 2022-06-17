@@ -2,43 +2,46 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Spring '83</title>
-
+    {{ #boards }}
+    <link rel="alternate" type="text/board+html" href="https://{{ fqdn }}/{{ key }}" />
+    {{ /boards }}
+    <title>A Spring '83 Server</title>
     <style type="text/css">
     html {
       height: 100%;
       background-image: linear-gradient(to top, #fad0c4 0%, #ffd1ff 100%);
     }
-
-    #src_link {
-      position: absolute;
-      top: 0px;
-      right: 0px;
-    }
-
-    #key {
-      position: absolute;
-      bottom: 10px;
-    }
     </style>
   </head>
   <body>
-    <h1>A <a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring '83</a> server</h1>
-
-    <h3>Boards:</h3>
-    <ul>
-    {{ #boards }}
-      <div>
-        <li><a href="/{{ key }}">{{ key_display }}</a></li>
-      </div>
-    {{ /boards }}
-    </ul>
-
-    <div>
-      Want to <a href="https://github.com/rpj/spring83#putnew">post</a>? <a href="https://github.com/rpj/spring83#findkey">Find</a> a keypair!
-    </div>
-    <div id="key">
-      Source on <a href="https://github.com/rpj/spring83">GitHub</a>. 
-    </div>
+    <h1>A <a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring '83</a> server.</h1>
+    {{ #boards.length }}
+      <h3>Known boards:</h3>
+      <ul>
+      {{ #boards }}
+        <div>
+          <li><a href="https://{{ fqdn }}/{{ key }}" target="_blank">{{ key_display }}</a></li>
+        </div>
+      {{ /boards }}
+      </ul>
+    {{ /boards.length }}
+    <p>
+      Want to <a href="https://github.com/rpj/spring83#putnew" target="_blank">post</a>?
+      <a href="https://github.com/rpj/spring83#findkey" target="_blank">Find</a> a keypair!
+    </p>
+    <p>
+      (Mostly) conforming to
+      <a href="https://github.com/robinsloan/spring-83-spec/blob/0f63d3d25125106ad23428bcdaeb43b2c7840d53/draft-20220616.md" target="_blank"><code>draft-20220616</code></a>
+      of the specification.
+    </p>
+    <p>
+      Illegal, abusive, discriminatory, hateful, or unethical content is not allowed.<br/>
+      The host reserves the right to remove boards at will.
+    </p>
+    <p>
+      Source on <a href="https://github.com/rpj/spring83" target="_blank">GitHub</a>.
+    </p>
+    <p>
+    </p>
   </body>
 </html>

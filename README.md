@@ -1,6 +1,6 @@
 An implementation of the [Spring 83 protocol](https://github.com/robinsloan/spring-83-spec).
 
-Very much a work-in-progress. This was built in reference to [`draft-20220609.md`@`1a37b2fb`](https://github.com/robinsloan/spring-83-spec/blob/1a37b2fbf2a54610905a331a2d0e854c05c9843b/draft-20220609.md).
+Very much a work-in-progress. This was built in reference to [`draft-20220616.md`@`0f63d3d2`](https://github.com/robinsloan/spring-83-spec/blob/0f63d3d25125106ad23428bcdaeb43b2c7840d53/draft-20220616.md).
 
 ## Setup
 
