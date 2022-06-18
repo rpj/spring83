@@ -7,6 +7,7 @@ services:
     network_mode: "host"
     environment:
       - SPRING83_FQDN=${SPRING83_FQDN}
+      - SPRING83_CONTACT_ADDR=${SPRING83_CONTACT_ADDR}
     volumes: &default-logs-bind
       - type: bind
         source: ${SPRING83_CONTENT_DIR_HOST:?"Must define SPRING83_CONTENT_DIR_HOST as the absolute path to logs on the host."}

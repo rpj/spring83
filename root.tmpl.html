@@ -20,7 +20,7 @@
       <ul>
       {{ #boards }}
         <div>
-          <li><a href="https://{{ fqdn }}/{{ key }}" target="_blank">{{ key_display }}</a></li>
+          <li><a href="https://{{ fqdn }}/{{ key }}" target="_blank">{{ key_display }}</a> <i>({{ ttl }} days)</i></li>
         </div>
       {{ /boards }}
       </ul>
@@ -37,6 +37,9 @@
     <p>
       Illegal, abusive, discriminatory, hateful, or unethical content is not allowed.<br/>
       The host reserves the right to remove boards at will.
+      {{ #contactAddr }}
+      <a href="mailto:{{ contactAddr }}">Contact.</a>
+      {{ /contactAddr }}
     </p>
     <p>
       Source on <a href="https://github.com/rpj/spring83" target="_blank">GitHub</a>.

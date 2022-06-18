@@ -123,7 +123,9 @@ async function ttlKiller (knownKeys, contentDir) {
       await fs.promises.rm(pPrefix + '.json');
       delete knownKeys[key];
     } else {
-      app.log.info(`${key} (${headers['if-unmodified-since']}) has ${(ttlCheck - expiry) / (1000 * 60 * 60 * 24)} days TTL`);
+      const daysTtl = Number((ttlCheck - expiry) / (1000 * 60 * 60 * 24)).toFixed(0);
+      app.log.info(`${key} (${headers['if-unmodified-since']}) has ${daysTtl} days TTL`);
+      knownKeys[key].metadata.daysTtl = daysTtl;
     }
   }
 
@@ -134,6 +136,7 @@ async function main () {
   const rootTmpl = (await fs.promises.readFile(path.join(__dirname, constants.rootTemplateName))).toString('utf8');
   const contentDir = path.resolve(process.env.SPRING83_CONTENT_DIR || path.join(__dirname, constants.defaultContentPath));
   const fqdn = process.env.SPRING83_FQDN || constants.defaultFQDN;
+  const contactAddr = process.env.SPRING83_CONTACT_ADDR;
 
   await fs.promises.mkdir(contentDir, { recursive: true });
   const knownKeys = await findKnownKeys(contentDir);
@@ -258,8 +261,10 @@ async function main () {
     reply.header(constants.headerNames.difficulty, getCurrentDifficultyFactor(knownKeys));
     return mustache.render(rootTmpl, {
       fqdn,
+      contactAddr,
       boards: Object.keys(knownKeys).map((key) => ({
         key,
+        ttl: knownKeys[key].metadata.daysTtl,
         key_display: key.slice(0, 16)
       }))
     });
