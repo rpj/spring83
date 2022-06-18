@@ -20,7 +20,9 @@ const constants = Object.freeze({
   rootTemplateName: 'root.tmpl.html',
   defaultContentPath: '.content',
   defaultFQDN: 'example.com',
-  strictVerification: true
+  strictVerification: true,
+  maxKey64: (2 ** 64 - 1),
+  ttlCheckFreqMinutes: 11
 });
 
 // 'strict' only allows keys that are usable *now* to match
@@ -35,9 +37,9 @@ function pubKeyHexIsValid (pubKeyHex, strict = false) {
       return false;
     }
 
-    const curYearTwoDigit = new Date().getYear() - 100;
+    const curYearTwoDigit = (new Date().getYear() - 100);
 
-    if (lastTwoDigitsNum < curYearTwoDigit) {
+    if (!(lastTwoDigitsNum > curYearTwoDigit - 2 && lastTwoDigitsNum < curYearTwoDigit + 1)) {
       return false;
     }
 
@@ -69,11 +71,22 @@ function signatureFromAuthorization (v) {
   return sigHex;
 }
 
+function getCurrentDifficultyFactor (knownKeys) {
+  return (Object.keys(knownKeys).length / constants.maximumNumberOfBoards) ** 4;
+}
+
 module.exports = {
   constants,
 
   pubKeyIsValid: (pubKeyData, strict = false) => pubKeyHexIsValid(Buffer.from(pubKeyData).toString('hex'), strict),
   pubKeyHexIsValid,
 
-  signatureFromAuthorization
+  signatureFromAuthorization,
+
+  getCurrentDifficultyFactor,
+  keyIsUnderDifficultyThreshold: (pubKeyHex, knownKeys) =>
+    Buffer.from(pubKeyHex, 'hex').readBigInt64BE() < BigInt(constants.maxKey64 * (1.0 - getCurrentDifficultyFactor(knownKeys))),
+
+  normalizedZeroBoardKeyDifficultyFactor: (pubKeyHex) =>
+    Buffer.from(pubKeyHex, 'hex').readBigInt64BE() / BigInt(constants.maxKey64 * (1.0 - getCurrentDifficultyFactor({})))
 };

@@ -6,7 +6,13 @@ const cheerio = require('cheerio');
 const ed = require('@noble/ed25519');
 const mustache = require('mustache');
 const app = require('fastify')({ logger: true });
-const { constants, pubKeyHexIsValid, signatureFromAuthorization } = require('./common');
+const {
+  constants,
+  pubKeyHexIsValid,
+  signatureFromAuthorization,
+  getCurrentDifficultyFactor,
+  keyIsUnderDifficultyThreshold
+} = require('./common');
 
 const expectPutHeaders = Object.freeze({
   'content-type': constants.contentType,
@@ -105,23 +111,49 @@ async function findKnownKeys (contentDir) {
     .reduce((a, [key, body, metadata]) => ({ [key]: { body, metadata }, ...a }), {});
 }
 
+async function ttlKiller (knownKeys, contentDir) {
+  const expiry = new Date(Date.now() - constants.boardTTLDays * 24 * 60 * 60 * 1000);
+  app.log.info(`ttlKiller awake, expiry=${expiry}`);
+  for (const [key, { metadata: { headers } }] of Object.entries(knownKeys)) {
+    const ttlCheck = Date.parse(headers['if-unmodified-since']);
+    if (ttlCheck < expiry) {
+      app.log.warn(`TTL expired for ${key} ${headers['if-unmodified-since']}`);
+      const pPrefix = path.join(contentDir, key);
+      await fs.promises.rm(pPrefix + '.html');
+      await fs.promises.rm(pPrefix + '.json');
+      delete knownKeys[key];
+    } else {
+      app.log.info(`${key} (${headers['if-unmodified-since']}) has ${(ttlCheck - expiry) / (1000 * 60 * 60 * 24)} days TTL`);
+    }
+  }
+
+  setTimeout(ttlKiller.bind(null, knownKeys, contentDir), constants.ttlCheckFreqMinutes * 60 * 1000);
+}
+
 async function main () {
   const rootTmpl = (await fs.promises.readFile(path.join(__dirname, constants.rootTemplateName))).toString('utf8');
   const contentDir = path.resolve(process.env.SPRING83_CONTENT_DIR || path.join(__dirname, constants.defaultContentPath));
   const fqdn = process.env.SPRING83_FQDN || constants.defaultFQDN;
-  const getCurrentDifficultyFactor = () => (Object.keys(knownKeys).length / constants.maximumNumberOfBoards) ** 4;
 
   await fs.promises.mkdir(contentDir, { recursive: true });
   const knownKeys = await findKnownKeys(contentDir);
+  await ttlKiller(knownKeys, contentDir);
 
   app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
 
   app.put('/:key', async (req, reply) => {
+    if (getCurrentDifficultyFactor(knownKeys) >= 1.0) {
+      app.log.warn('getCurrentDifficultyFactor');
+      reply.code(403);
+      return;
+    }
+
     const putCheckRes = Object.entries(initialPutChecks)
       .find(([, checkFunc]) => checkFunc(req));
 
     if (putCheckRes) {
       app.log.warn(putCheckRes[0]);
+      app.log.warn('putCheckRes');
       reply.code(400);
       return;
     }
@@ -135,7 +167,14 @@ async function main () {
       const metaCheck = documentHasRequiredMeta(req); // check in initialPutChecks prior, so will have a value
 
       if (metaCheck <= Date.parse(headers['if-unmodified-since'])) {
+        app.log.warn('past if-unmodified-since');
         reply.code(409);
+        return;
+      }
+
+      if (!keyIsUnderDifficultyThreshold(req.params.key, knownKeys)) {
+        app.log.warn('difficulty threshold');
+        reply.code(403);
         return;
       }
     } catch (err) {
@@ -216,7 +255,7 @@ async function main () {
 
   app.get('/', async (req, reply) => {
     applyGenericGETReplyHeaders(reply, true);
-    reply.header(constants.headerNames.difficulty, getCurrentDifficultyFactor());
+    reply.header(constants.headerNames.difficulty, getCurrentDifficultyFactor(knownKeys));
     return mustache.render(rootTmpl, {
       fqdn,
       boards: Object.keys(knownKeys).map((key) => ({
