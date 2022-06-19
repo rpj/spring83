@@ -3,7 +3,6 @@ const constants = Object.freeze({
   maximumNumberOfBoards: 10_000_000,
   protocolVersion: '83',
   contentType: 'text/html;charset=utf-8',
-  authorizationPreamble: 'Spring-83 Signature',
   keyMatchRegex: /83e(0[1-9]|1[0-2])(\d\d)$/,
   unmodifiedSinceTimeFudgeMs: 6000,
   boardTTLDays: 22,

@@ -13,11 +13,12 @@ if (process.argv.length !== 5) {
 const [,, host, privKeyHex, htmlFile] = process.argv;
 let htmlFileBytes = fs.readFileSync(htmlFile);
 const htmlParsed = cheerio.load(htmlFileBytes);
-const unmodifiedSince = new Date().toUTCString();
+const umsDate = new Date();
+const unmodifiedSince = umsDate.toUTCString();
 
-// append meta tag if not present
-if (htmlParsed('meta[http-equiv=last-modified]').length === 0) {
-  htmlParsed('head').append(`<meta http-equiv="last-modified" content="${unmodifiedSince}">`);
+// append required <time> tag if not already present
+if (htmlParsed('time').length === 0) {
+  htmlParsed('html').append(`<time datetime="${umsDate.toISOString().replace(/\.\d{3}Z$/, 'Z')}">`);
   htmlFileBytes = Buffer.from(htmlParsed.root().html(), 'utf8');
 }
 
@@ -31,7 +32,7 @@ ed.sign(htmlFileBytes, privKeyHex).then(async (sigBytes) => {
       'content-type': constants.contentType,
       [constants.headerNames.version]: constants.protocolVersion,
       'if-unmodified-since': unmodifiedSince,
-      authorization: `${constants.authorizationPreamble}=${sigHex}`
+      [constants.headerNames.signature]: sigHex
     },
     body: htmlFileBytes
   });

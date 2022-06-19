@@ -38,8 +38,8 @@ const expectPutHeaders = Object.freeze({
     context.multipleUnmodifiedSinceHeaders = 1;
     context.ifUnmodifiedSinceUNIXTime = parsed;
   },
-  authorization: async (v, context) => {
-    const sigHex = signatureFromAuthorization(v);
+  [constants.headerNames.signature]: async (v, context) => {
+    const sigHex = v;
 
     if (!sigHex) {
       return 401;
