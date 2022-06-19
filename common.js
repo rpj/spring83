@@ -37,17 +37,16 @@ function pubKeyHexIsValid (pubKeyHex, strict = false) {
       return false;
     }
 
-    const curYearTwoDigit = (new Date().getYear() - 100);
-
-    if (!(lastTwoDigitsNum > curYearTwoDigit - 2 && lastTwoDigitsNum < curYearTwoDigit + 1)) {
+    let today = Date.now();
+    let expiry = new Date(`${lastTwoDigitsNum}-${monthDigits}-1`); // node should do the right thing, even with a two digit year
+    expiry.setMonth(expiry.getMonth() + 1);
+    let twoYearsFromNow = new Date(new Date().setFullYear(new Date().getFullYear() + 2))
+    
+    if(today >= expiry){
       return false;
     }
 
-    if (strict && lastTwoDigitsNum !== curYearTwoDigit) {
-      return false;
-    }
-
-    if (strict && monthDigits > new Date().getMonth() + 1) {
+    if(expiry > twoYearsFromNow) {
       return false;
     }
 
