@@ -59,6 +59,15 @@ async function findKeypairFile (publicKey, root) {
   }));
 }
 
+async function boardExistsLocally (contentDir, pubKey) {
+  return (await Promise.all(['html', 'json'].map(async (ext) => {
+    try {
+      return Boolean(await fs.promises.stat(path.join(contentDir, `${pubKey}.${ext}`)));
+    } catch {}
+    return false;
+  }))).every(x => x === true);
+}
+
 // 'strict' only allows keys that are usable *now* to match
 function pubKeyHexIsValid (pubKeyHex, strict = false) {
   const match = pubKeyHex.match(constants.keyMatchRegex);
@@ -132,5 +141,6 @@ module.exports = {
   keyIsUnderDifficultyThreshold,
   findKnownKeys,
   keyPairFilename,
-  readKeypairFile
+  readKeypairFile,
+  boardExistsLocally
 };

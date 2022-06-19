@@ -13,7 +13,8 @@ const {
   findKnownKeys,
   pubKeyHexIsValid,
   getCurrentDifficultyFactor,
-  keyIsUnderDifficultyThreshold
+  keyIsUnderDifficultyThreshold,
+  boardExistsLocally
 } = require('./common');
 
 const expectPutHeaders = Object.freeze({
@@ -120,10 +121,11 @@ async function ttlKiller (knownKeys, contentDir) {
 }
 
 let pubBoards = [];
-async function refreshPubBoards () {
-  setTimeout(refreshPubBoards, constants.pubBoardRefreshFreqMinutes * 60 * 1000);
+async function refreshPubBoards (contentDir) {
+  setTimeout(refreshPubBoards.bind(null, contentDir), constants.pubBoardRefreshFreqMinutes * 60 * 1000);
   try {
-    pubBoards = JSON.parse(await fs.promises.readFile(path.join(__dirname, constants.pubBoardsJsonFileName)));
+    pubBoards = await Promise.all(JSON.parse(await fs.promises.readFile(path.join(__dirname, constants.pubBoardsJsonFileName)))
+      .map(async (key) => [key, await boardExistsLocally(contentDir, key)]));
   } catch {}
 }
 
@@ -137,7 +139,7 @@ async function main () {
   await fs.promises.mkdir(contentDir, { recursive: true });
   const knownKeys = await findKnownKeys(contentDir);
   await ttlKiller(knownKeys, contentDir);
-  await refreshPubBoards();
+  await refreshPubBoards(contentDir);
 
   app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
 
@@ -263,14 +265,14 @@ async function main () {
     reply.header(constants.headerNames.difficulty, getCurrentDifficultyFactor(knownKeys));
     const keyMapper = (key) => ({
       key,
-      ttl: knownKeys[key].metadata.daysTtl,
+      ttl: knownKeys[key]?.metadata?.daysTtl,
       key_display: key.slice(0, 16)
     });
     const renderMap = {
       fqdn,
       contactAddr,
       boards: Object.keys(knownKeys).map(keyMapper),
-      pubBoards: pubBoards.map(keyMapper)
+      pubBoards: pubBoards.filter(([, exists]) => exists === true).map(([key]) => key).map(keyMapper)
     };
 
     return mustache.render(rootTmpl, renderMap);
