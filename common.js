@@ -24,6 +24,7 @@ const constants = Object.freeze({
     version: 'spring-version'
   },
   rootTemplateName: 'root.tmpl.html',
+  notFoundTmplName: '404.tmpl.html',
   defaultContentPath: '.content',
   defaultFQDN: 'example.com',
   strictVerification: true,
