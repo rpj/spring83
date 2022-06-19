@@ -70,6 +70,6 @@ The output format matches the format that [Robin's client expects](https://githu
 
 ## Interacting
 
-Robin has an impressive demo client available [here](https://github.com/robinsloan/spring-83-spec/tree/main/demo-client).
+Robin has an impressive demo client available [here](https://github.com/robinsloan/spring-83-spec/tree/main/demo-client). His host is running at [https://bogbody.biz](https://bogbody.biz).
 
-If you'd like to be listed in the public boards' list on 0l0.lol, just send mail to include-me-s83@0l0.lol with your hex public key as the subject.
+This implementation is running at [https://0l0.lol](https://0l0.lol). If you'd like to be listed in the public boards' list here, just send mail to include-me-s83@0l0.lol with your hex public key as the subject.
