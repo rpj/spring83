@@ -1,5 +1,6 @@
 services:
   serve:
+    container_name: spring83
     build: &default-build-spec
       context: .
       dockerfile: Dockerfile
