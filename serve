@@ -132,6 +132,7 @@ async function refreshPubBoards (contentDir) {
 async function main () {
   const rootTmpl = (await fs.promises.readFile(path.join(__dirname, constants.rootTemplateName))).toString('utf8');
   const notFoundTmpl = (await fs.promises.readFile(path.join(__dirname, constants.notFoundTmplName))).toString('utf8');
+  const testKeyTmpl = (await fs.promises.readFile(path.join(__dirname, constants.testKeyTmplName))).toString('utf8');
   const contentDir = path.resolve(process.env.SPRING83_CONTENT_DIR || path.join(__dirname, constants.defaultContentPath));
   const fqdn = process.env.SPRING83_FQDN || constants.defaultFQDN;
   const contactAddr = process.env.SPRING83_CONTACT_ADDR;
@@ -236,6 +237,11 @@ async function main () {
     }
 
     renderMap.key = req.params.key;
+
+    if (req.params.key === constants.testPublicKey) {
+      reply.code(200);
+      return mustache.render(testKeyTmpl, renderMap);
+    }
 
     if (!knownKeys[req.params.key]) {
       app.log.warn('invalid content');

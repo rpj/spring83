@@ -25,6 +25,7 @@ const constants = Object.freeze({
   },
   rootTemplateName: 'root.tmpl.html',
   notFoundTmplName: '404.tmpl.html',
+  testKeyTmplName: 'testkey.tmpl.html',
   defaultContentPath: '.content',
   defaultFQDN: 'example.com',
   strictVerification: true,
@@ -32,7 +33,8 @@ const constants = Object.freeze({
   ttlCheckFreqMinutes: 11,
   keypairFilenamePrefix: 'spring-83-keypair',
   pubBoardsJsonFileName: 'public-boards.json',
-  pubBoardRefreshFreqMinutes: 3
+  pubBoardRefreshFreqMinutes: 3,
+  testPublicKey: 'ca93846ae61903a862d44727c16fed4b80c0522cab5e5b8b54763068b83e0623'
 });
 
 function keyPairFilename (publicKey, root = __dirname) {
