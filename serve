@@ -13,7 +13,7 @@ const {
   findKnownKeys,
   pubKeyHexIsValid,
   getCurrentDifficultyFactor,
-  keyHexIsUnderDifficultyThreshold
+  keyIsUnderDifficultyThreshold
 } = require('./common');
 
 const expectPutHeaders = Object.freeze({
@@ -171,7 +171,7 @@ async function main () {
         return;
       }
 
-      if (!keyHexIsUnderDifficultyThreshold(req.params.key, knownKeys)) {
+      if (!keyIsUnderDifficultyThreshold(req.params.key, knownKeys)) {
         app.log.warn('difficulty threshold');
         reply.code(403);
         return;

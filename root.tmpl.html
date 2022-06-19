@@ -18,7 +18,7 @@
       <div>
         <ul>
         {{ #pubBoards }}
-            <li><a href="/{{ key }}" target="_blank">{{ key_display }}</a> <i>({{ ttl }} days)</i></li>
+            <li><a href="/{{ key }}" target="_blank">{{ key_display }}</a> <i>({{ #ttl }}{{ ttl }} days{{ /ttl }}{{ ^ttl }}New!{{ /ttl }})</i></li>
         {{ /pubBoards }}
         </ul>
       </div>
