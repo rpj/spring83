@@ -5,6 +5,7 @@ RUN npm install
 COPY common.js .
 COPY root.tmpl.html .
 COPY serve .
+COPY public-boards.json .
 STOPSIGNAL SIGINT
 
 FROM base as serve
