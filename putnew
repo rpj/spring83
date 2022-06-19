@@ -48,9 +48,9 @@ async function putOneBytes (host, privKeyHex, htmlFileBytes, pubKey) {
   });
 
   if (!fetchRes.ok) {
-    console.error(`ERROR: ${fetchRes.status} "${fetchRes.statusText}"`);
+    console.error(`ERROR: ${host} ${fetchRes.status} "${fetchRes.statusText}"`);
   } else {
-    console.log(`PUT ${fetchUri} ${fetchRes.status}`);
+    console.log(`${host} PUT ${fetchUri} ${fetchRes.status}`);
   }
 }
 
