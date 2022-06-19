@@ -18,7 +18,7 @@ async function findMatchingKey (strict, rounds = 0, matchedResolver) {
   }
 
   const privateKey = ed.utils.randomPrivateKey();
-  const publicKey = await ed.getPublicKey(privateKey);
+  const publicKey = Buffer.from(await ed.getPublicKey(privateKey));
 
   if (pubKeyIsValid(publicKey, strict) && keyIsUnderDifficultyThreshold(publicKey, {})) {
     return matchedResolver({ rounds, matched: { privateKey, publicKey } });
