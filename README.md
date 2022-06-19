@@ -76,12 +76,12 @@ This implementation is running at [https://0l0.lol](https://0l0.lol) and [https:
 
 ### Other known implementations
 
-| Name                       | Lang                | Instance                 |
+| Name | Language | Instance |
 | -------------------------- | ------------------- | -------------------------|
-| [davemenninger/exspring83] | elixir              |                          |
-| [llimllib/springer]        | golang              |                          |
-| [motevets/s83]             | golang              |                          |
-| [pteichman/ahoy]           | golang              |                          |
-| [royragsdale/s83]          | golang              |                          |
+| [davemenninger/exspring83](https://github.com/davemenninger/exspring83) | elixir | |
+| [llimllib/springer](https://github.com/llimllib/springer) | golang | |
+| [motevets/s83](https://github.com/motevets/s83) | golang | |
+| [pteichman/ahoy](https://github.com/pteichman/ahoy) | golang | |
+| [royragsdale/s83](https://github.com/royragsdale/s83) | golang | |
 | [cellu_cc/so83-gpu (gitlab)](https://gitlab.com/cellu_cc/so83-gpu) | opencl | |
-| [michael-lazar/lets-dance] | python              | https://spring83.mozz.us |
+| [michael-lazar/lets-dance](https://github.com/michael-lazar/lets-dance) | python | https://spring83.mozz.us |
