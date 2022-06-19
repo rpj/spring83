@@ -7,8 +7,10 @@ const constants = Object.freeze({
   unmodifiedSinceTimeFudgeMs: 6000,
   boardTTLDays: 22,
   getKeySecurityPolicies: {
-    none: ['script-src', 'script-src-attr', 'script-src-elem',
-      'child-src', 'frame-src', 'prefetch-src', ' object-src', 'font-src'],
+    none: ['default-src', 'script-src', 'script-src-attr', 'script-src-elem',
+      'child-src', 'frame-src', 'prefetch-src', ' object-src'],
+    self: ['font-src'],
+    'unsafe-inline': ['style-src'],
     'data:': ['img-src']
   },
   headerNames: {
@@ -52,20 +54,6 @@ function pubKeyHexIsValid (pubKeyHex, strict = false) {
   return false;
 }
 
-function signatureFromAuthorization (v) {
-  if (v.indexOf('=') === -1) {
-    return null;
-  }
-
-  const [preamble, sigHex] = v.split('=');
-
-  if (preamble !== constants.authorizationPreamble) {
-    return null;
-  }
-
-  return sigHex;
-}
-
 function getCurrentDifficultyFactor (knownKeys) {
   return (Object.keys(knownKeys).length / constants.maximumNumberOfBoards) ** 4;
 }
@@ -75,8 +63,6 @@ module.exports = {
 
   pubKeyIsValid: (pubKeyData, strict = false) => pubKeyHexIsValid(Buffer.from(pubKeyData).toString('hex'), strict),
   pubKeyHexIsValid,
-
-  signatureFromAuthorization,
 
   getCurrentDifficultyFactor,
   keyIsUnderDifficultyThreshold: (pubKeyHex, knownKeys) =>

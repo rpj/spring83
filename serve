@@ -9,7 +9,6 @@ const app = require('fastify')({ logger: true });
 const {
   constants,
   pubKeyHexIsValid,
-  signatureFromAuthorization,
   getCurrentDifficultyFactor,
   keyIsUnderDifficultyThreshold
 } = require('./common');
@@ -65,7 +64,7 @@ const initialPutChecks = Object.freeze({
 });
 
 function documentHasRequiredMeta (req) {
-  return Date.parse(cheerio.load(req.body)('meta[http-equiv=last-modified]')?.attr()?.content);
+  return Date.parse(cheerio.load(req.body)('time')?.attr()?.datetime);
 }
 
 async function validateHeader (context, [header, val]) {
@@ -238,12 +237,12 @@ async function main () {
     }
 
     const { body, metadata: { headers } } = knownKeys[req.params.key];
-    if (!body || !headers?.['if-unmodified-since'] || !headers?.authorization) {
+    if (!body || !headers?.['if-unmodified-since'] || !headers[constants.headerNames.signature]) {
       app.log.warn('invalid content fields');
       return;
     }
 
-    const sig = signatureFromAuthorization(headers.authorization);
+    const sig = headers[constants.headerNames.signature];
     if (!sig) {
       app.log.warn('invalid sig');
       return;
