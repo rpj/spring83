@@ -39,7 +39,7 @@ function pubKeyHexIsValid (pubKeyHex, strict = false) {
 
     const curYearTwoDigit = (new Date().getYear() - 100);
 
-    if (!(lastTwoDigitsNum > curYearTwoDigit - 2 && lastTwoDigitsNum < curYearTwoDigit + 1)) {
+    if (!(lastTwoDigitsNum > curYearTwoDigit - 2 && lastTwoDigitsNum <= curYearTwoDigit + 1)) {
       return false;
     }
 
