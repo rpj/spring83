@@ -15,6 +15,13 @@
     {{ #boards.length }}
       <h3>{{ boards.length }} hosted boards</h3>
     {{ /boards.length }}
+
+    {{ #pubBoards.length }}
+      <h3>Publicly-listed boards:</h3>
+      <div>
+        <li><a href="/{{ key }}" target="_blank">{{ key_display }}</a> <i>({{ ttl }} days)</i></li>
+      </div>
+    {{ /pubBoards.length }}
     <p>
       Want to <a href="https://github.com/rpj/spring83#putnew" target="_blank">post</a>?
       <a href="https://github.com/rpj/spring83#findkey" target="_blank">Find</a> a keypair!

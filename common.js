@@ -29,7 +29,9 @@ const constants = Object.freeze({
   strictVerification: true,
   maxKey64: (2 ** 64 - 1),
   ttlCheckFreqMinutes: 11,
-  keypairFilenamePrefix: 'spring-83-keypair'
+  keypairFilenamePrefix: 'spring-83-keypair',
+  pubBoardsJsonFileName: 'public-boards.json',
+  pubBoardRefreshFreqMinutes: 3
 });
 
 function keyPairFilename (publicKey, root = __dirname) {

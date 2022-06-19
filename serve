@@ -119,6 +119,12 @@ async function ttlKiller (knownKeys, contentDir) {
   setTimeout(ttlKiller.bind(null, knownKeys, contentDir), constants.ttlCheckFreqMinutes * 60 * 1000);
 }
 
+let pubBoards = [];
+async function refreshPubBoards () {
+  setTimeout(refreshPubBoards, constants.pubBoardRefreshFreqMinutes * 60 * 1000);
+  pubBoards = JSON.parse(await fs.promises.readFile(path.join(__dirname, constants.pubBoardsJsonFileName)));
+}
+
 async function main () {
   const rootTmpl = (await fs.promises.readFile(path.join(__dirname, constants.rootTemplateName))).toString('utf8');
   const contentDir = path.resolve(process.env.SPRING83_CONTENT_DIR || path.join(__dirname, constants.defaultContentPath));
@@ -128,6 +134,7 @@ async function main () {
   await fs.promises.mkdir(contentDir, { recursive: true });
   const knownKeys = await findKnownKeys(contentDir);
   await ttlKiller(knownKeys, contentDir);
+  await refreshPubBoards();
 
   app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
 
@@ -246,14 +253,16 @@ async function main () {
   app.get('/', async (req, reply) => {
     applyGenericGETReplyHeaders(reply, true);
     reply.header(constants.headerNames.difficulty, getCurrentDifficultyFactor(knownKeys));
+    const keyMapper = (key) => ({
+      key,
+      ttl: knownKeys[key].metadata.daysTtl,
+      key_display: key.slice(0, 16)
+    });
     return mustache.render(rootTmpl, {
       fqdn,
       contactAddr,
-      boards: Object.keys(knownKeys).map((key) => ({
-        key,
-        ttl: knownKeys[key].metadata.daysTtl,
-        key_display: key.slice(0, 16)
-      }))
+      boards: Object.keys(knownKeys).map(keyMapper),
+      pubBoards: pubBoards.map(keyMapper)
     });
   });
 

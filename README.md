@@ -12,16 +12,6 @@ $ npm install
 
 ## Tools
 
-### `findkey`
-
-**Update**: I'll maintain this script for good measure, but you should probably just use [PT's Go keyfinder](https://github.com/pteichman/ahoy) as it is undoubtedly <i>much</i> faster than this one.
-
-Randomly generates Ed25519 key pairs until one matching the specified format has been found.
-
-If called with `--strict`, will _only_ return when a key pair is found that is valid _this calendar year_.
-
-The output format matches the format that [Robin's client expects](https://github.com/robinsloan/spring-83-spec/tree/main/demo-client) and will be named in the same format.
-
 ### `putnew`
 
 ```
@@ -67,3 +57,19 @@ If Docker is available, can be run simply with `docker compose up --build -d`: `
 Other environment variables you should set:
   * `SPRING83_FQDN`: your fully-qualified domain name (no protocol scheme, e.g. `0l0.lol`)
   * `SPRING83_CONTACT_ADDR`: a contact email address for your site
+
+### `findkey`
+
+**Update**: I'll maintain this script for good measure, but you should probably just use [PT's Go keyfinder](https://github.com/pteichman/ahoy) as it is undoubtedly <i>much</i> faster than this one.
+
+Randomly generates Ed25519 key pairs until one matching the specified format has been found.
+
+If called with `--strict`, will _only_ return when a key pair is found that is valid _this calendar year_.
+
+The output format matches the format that [Robin's client expects](https://github.com/robinsloan/spring-83-spec/tree/main/demo-client) and will be named in the same format.
+
+## Interacting
+
+Robin has an impressive demo client available [here](https://github.com/robinsloan/spring-83-spec/tree/main/demo-client).
+
+If you'd like to be listed in the public boards' list on 0l0.lol, just [mailto:s83-include-me@0l0.lol](drop me a line) with your hex public key as the subject.
