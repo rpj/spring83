@@ -2,9 +2,6 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {{ #boards }}
-    <link rel="alternate" type="text/board+html" href="https://{{ fqdn }}/{{ key }}" />
-    {{ /boards }}
     <title>🌸 A Spring '83 Server</title>
     <style type="text/css">
     html {
@@ -16,14 +13,7 @@
   <body>
     <h1>🌸 A <a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring '83</a> server.</h1>
     {{ #boards.length }}
-      <h3>Known boards:</h3>
-      <ul>
-      {{ #boards }}
-        <div>
-          <li><a href="https://{{ fqdn }}/{{ key }}" target="_blank">{{ key_display }}</a> <i>({{ ttl }} days)</i></li>
-        </div>
-      {{ /boards }}
-      </ul>
+      <h3>{{ boards.length }} hosted boards</h3>
     {{ /boards.length }}
     <p>
       Want to <a href="https://github.com/rpj/spring83#putnew" target="_blank">post</a>?

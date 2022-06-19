@@ -47,10 +47,6 @@ function pubKeyHexIsValid (pubKeyHex, strict = false) {
       return false;
     }
 
-    if (monthDigits > new Date().getMonth() + 1) {
-      return false;
-    }
-
     return true;
   }
 
