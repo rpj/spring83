@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
 const cheerio = require('cheerio');
@@ -8,9 +10,10 @@ const mustache = require('mustache');
 const app = require('fastify')({ logger: true });
 const {
   constants,
+  findKnownKeys,
   pubKeyHexIsValid,
   getCurrentDifficultyFactor,
-  keyIsUnderDifficultyThreshold
+  keyHexIsUnderDifficultyThreshold
 } = require('./common');
 
 const expectPutHeaders = Object.freeze({
@@ -95,21 +98,6 @@ function applyGenericGETReplyHeaders (reply, isRoot = false) {
   }
 }
 
-async function findKnownKeys (contentDir) {
-  return (await Promise.all((await fs.promises.readdir(contentDir)).filter((p) => {
-    const parsed = path.parse(p);
-    return parsed.name.match(constants.keyMatchRegex) && parsed.ext === '.html';
-  })
-    .map(path.parse)
-    .filter(({ name }) => pubKeyHexIsValid(name, constants.strictVerification))
-    .map(async (pObj) => ([
-      pObj.name,
-      (await fs.promises.readFile(path.join(contentDir, pObj.name + pObj.ext))).toString('utf8'),
-      JSON.parse(await fs.promises.readFile(path.join(contentDir, pObj.name + '.json')))
-    ]))))
-    .reduce((a, [key, body, metadata]) => ({ [key]: { body, metadata }, ...a }), {});
-}
-
 async function ttlKiller (knownKeys, contentDir) {
   const expiry = new Date(Date.now() - constants.boardTTLDays * 24 * 60 * 60 * 1000);
   app.log.info(`ttlKiller awake, expiry=${expiry}`);
@@ -174,7 +162,7 @@ async function main () {
         return;
       }
 
-      if (!keyIsUnderDifficultyThreshold(req.params.key, knownKeys)) {
+      if (!keyHexIsUnderDifficultyThreshold(req.params.key, knownKeys)) {
         app.log.warn('difficulty threshold');
         reply.code(403);
         return;

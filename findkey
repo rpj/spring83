@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
+'use strict';
+
 const fs = require('fs');
-const path = require('path');
 const ed = require('@noble/ed25519');
 const {
   pubKeyIsValid,
+  keyPairFilename,
   keyIsUnderDifficultyThreshold
 } = require('./common');
 
@@ -18,7 +20,7 @@ async function findMatchingKey (strict, rounds = 0, matchedResolver) {
   const privateKey = ed.utils.randomPrivateKey();
   const publicKey = await ed.getPublicKey(privateKey);
 
-  if (pubKeyIsValid(publicKey, strict) && keyIsUnderDifficultyThreshold(Buffer.from(publicKey).toString('hex'), {})) {
+  if (pubKeyIsValid(publicKey, strict) && keyIsUnderDifficultyThreshold(publicKey, {})) {
     return matchedResolver({ rounds, matched: { privateKey, publicKey } });
   }
 
@@ -26,22 +28,16 @@ async function findMatchingKey (strict, rounds = 0, matchedResolver) {
 }
 
 async function main () {
-  const start = Number(new Date());
-
+  const start = Date.now();
   ['SIGINT', 'SIGHUP'].forEach(sig => process.on(sig, () => process.exit()));
 
   const { rounds, matched } = await findMatchingKey(process.argv.length > 2 && process.argv[2] === '--strict');
-  const outLines = Object.entries(matched).map(([type, keyData]) => [type, Buffer.from(keyData).toString('hex')].join(' '));
+  const outLines = Object.entries(matched).map(([, keyData]) => Buffer.from(keyData).toString('hex'));
+  const outStr = outLines.join('');
+  const outFileName = keyPairFilename(matched.publicKey);
 
-  outLines.push(rounds);
-  outLines.push(Number(new Date()) - start);
-
-  const outStr = outLines.join('\n');
-  const outFileName = path.join(__dirname, Buffer.from(matched.publicKey).toString('hex').slice(0, 16) + '.txt');
-
-  console.log(outStr);
   await fs.promises.writeFile(outFileName, outStr);
-  console.log(`\nWrote: ${outFileName}`);
+  console.log(`${rounds} in ${(Date.now() - start) / 1000}s.\nWrote: ${outFileName}`);
 }
 
 main();

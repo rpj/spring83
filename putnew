@@ -1,28 +1,38 @@
 #!/usr/bin/env node
 
+'use strict';
+
 const fs = require('fs');
+const path = require('path');
 const cheerio = require('cheerio');
 const { fetch } = require('undici');
 const ed = require('@noble/ed25519');
-const { constants } = require('./common');
+const { constants, findKnownKeys } = require('./common');
 
-if (process.argv.length !== 5) {
-  throw new Error('usage: host privKeyHex htmlFile');
-}
+async function putOneBytes (host, privKeyHex, htmlFileBytes, pubKey) {
+  if (htmlFileBytes.length > constants.maximumContentLength) {
+    console.error(`ERROR: ${pubKey} is too large by ` +
+      `${htmlFileBytes.length - constants.maximumContentLength} bytes (${htmlFileBytes.length})!`);
+    process.exit(-1);
+  }
 
-const [,, host, privKeyHex, htmlFile] = process.argv;
-let htmlFileBytes = fs.readFileSync(htmlFile);
-const htmlParsed = cheerio.load(htmlFileBytes);
-const umsDate = new Date();
-const unmodifiedSince = umsDate.toUTCString();
+  const htmlParsed = cheerio.load(htmlFileBytes);
+  const umsDate = new Date();
+  const unmodifiedSince = umsDate.toUTCString();
 
-// append required <time> tag if not already present
-if (htmlParsed('time').length === 0) {
-  htmlParsed('html').append(`<time datetime="${umsDate.toISOString().replace(/\.\d{3}Z$/, 'Z')}">`);
-  htmlFileBytes = Buffer.from(htmlParsed.root().html(), 'utf8');
-}
+  // append required <time> tag if not already present
+  if (htmlParsed('time').length === 0) {
+    const ogByteLen = htmlFileBytes.length;
+    htmlParsed('html').append(`<time datetime="${umsDate.toISOString().replace(/\.\d{3}Z$/, 'Z')}">`);
+    htmlFileBytes = Buffer.from(htmlParsed.root().html(), 'utf8');
+    console.log(`Appended <time> to ${pubKey} which added ${htmlFileBytes.length - ogByteLen} bytes.`);
+    if (htmlFileBytes.length > constants.maximumContentLength) {
+      console.error('ERROR: This board won\'t fit anymore! Bailing...');
+      process.exit(-2);
+    }
+  }
 
-ed.sign(htmlFileBytes, privKeyHex).then(async (sigBytes) => {
+  const sigBytes = await ed.sign(htmlFileBytes, privKeyHex);
   const sigHex = Buffer.from(sigBytes).toString('hex');
   const pubKeyHex = Buffer.from(await ed.getPublicKey(privKeyHex)).toString('hex');
   const fetchUri = `${host}/${pubKeyHex}`;
@@ -42,4 +52,36 @@ ed.sign(htmlFileBytes, privKeyHex).then(async (sigBytes) => {
   } else {
     console.log(`PUT ${fetchUri} ${fetchRes.status}`);
   }
-});
+}
+
+async function putOne (host, privKeyHex, htmlFile) {
+  const htmlFileBytes = fs.readFileSync(htmlFile);
+  return putOneBytes(host, privKeyHex, htmlFileBytes, htmlFile);
+}
+
+async function main () {
+  if (process.argv.length === 4) {
+    let [,, boardsPath, postToHostsCSV] = process.argv;
+    postToHostsCSV = postToHostsCSV.split(',');
+
+    const boardKeys = await findKnownKeys(path.resolve(boardsPath), true);
+    console.log(`Posting ${Object.keys(boardKeys).length} boards to: ${postToHostsCSV.join(', ')}`);
+
+    await Promise.all(Object.entries(await findKnownKeys(path.resolve(boardsPath), true))
+      .map(async ([pubKey, { body, metadata }]) => await Promise.all(
+        postToHostsCSV.map(async (host) => await putOneBytes(host, metadata.private, body, pubKey))
+      )));
+
+    process.exit(0);
+  }
+
+  if (process.argv.length !== 5) {
+    console.log(`To put a single board: ${process.argv[1]} host privKeyHex htmlFile`);
+    console.log(`To put path of boards: ${process.argv[1]} boardPath hostsCommaSeperated`);
+    process.exit(0);
+  }
+
+  await putOne(...process.argv.slice(2));
+}
+
+main();
