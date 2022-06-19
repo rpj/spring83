@@ -72,4 +72,4 @@ The output format matches the format that [Robin's client expects](https://githu
 
 Robin has an impressive demo client available [here](https://github.com/robinsloan/spring-83-spec/tree/main/demo-client).
 
-If you'd like to be listed in the public boards' list on 0l0.lol, just [mailto:include-me-s83@0l0.lol](drop me a line) with your hex public key as the subject.
+If you'd like to be listed in the public boards' list on 0l0.lol, just send mail to include-me-s83@0l0.lol with your hex public key as the subject.
