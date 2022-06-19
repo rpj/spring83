@@ -122,7 +122,9 @@ async function ttlKiller (knownKeys, contentDir) {
 let pubBoards = [];
 async function refreshPubBoards () {
   setTimeout(refreshPubBoards, constants.pubBoardRefreshFreqMinutes * 60 * 1000);
-  pubBoards = JSON.parse(await fs.promises.readFile(path.join(__dirname, constants.pubBoardsJsonFileName)));
+  try {
+    pubBoards = JSON.parse(await fs.promises.readFile(path.join(__dirname, constants.pubBoardsJsonFileName)));
+  } catch {}
 }
 
 async function main () {
@@ -258,12 +260,14 @@ async function main () {
       ttl: knownKeys[key].metadata.daysTtl,
       key_display: key.slice(0, 16)
     });
-    return mustache.render(rootTmpl, {
+    const renderMap = {
       fqdn,
       contactAddr,
       boards: Object.keys(knownKeys).map(keyMapper),
       pubBoards: pubBoards.map(keyMapper)
-    });
+    };
+
+    return mustache.render(rootTmpl, renderMap);
   });
 
   ['SIGINT', 'SIGTERM'].forEach((sig) => process.on(sig, () => {

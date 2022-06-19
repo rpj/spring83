@@ -8,20 +8,25 @@
       height: 100%;
       background-image: linear-gradient(to top, #fad0c4 0%, #ffd1ff 100%);
     }
+    #ttl { font-style: italic; font-size: 0.7em; }
     </style>
   </head>
   <body>
     <h1>🌸 A <a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring '83</a> server.</h1>
-    {{ #boards.length }}
-      <h3>{{ boards.length }} hosted boards</h3>
-    {{ /boards.length }}
-
     {{ #pubBoards.length }}
-      <h3>Publicly-listed boards:</h3>
+      <h3>Publicly-listed boards <span id="ttl">(time-to-live)</i>:</h3>
       <div>
-        <li><a href="/{{ key }}" target="_blank">{{ key_display }}</a> <i>({{ ttl }} days)</i></li>
+        <ul>
+        {{ #pubBoards }}
+            <li><a href="/{{ key }}" target="_blank">{{ key_display }}</a> <i>({{ ttl }} days)</i></li>
+        {{ /pubBoards }}
+        </ul>
       </div>
+      <p>Want to be included here? <a href="mailto:include-me-{{ contactAddr }}">Drop a line</a> with your public key (in hex!) as the subject line.</p>
     {{ /pubBoards.length }}
+    {{ #boards.length }}
+      <h3>{{ boards.length }} hosted boards</h3>.
+    {{ /boards.length }}
     <p>
       Want to <a href="https://github.com/rpj/spring83#putnew" target="_blank">post</a>?
       <a href="https://github.com/rpj/spring83#findkey" target="_blank">Find</a> a keypair!
