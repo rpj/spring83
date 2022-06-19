@@ -43,11 +43,11 @@ function pubKeyHexIsValid (pubKeyHex, strict = false) {
       return false;
     }
 
-    if (strict && lastTwoDigitsNum !== curYearTwoDigit) {
+    if (strict && lastTwoDigitsNum !== curYearTwoDigit + 1) {
       return false;
     }
 
-    if (strict && monthDigits > new Date().getMonth() + 1) {
+    if (monthDigits > new Date().getMonth() + 1) {
       return false;
     }
 
@@ -85,8 +85,5 @@ module.exports = {
 
   getCurrentDifficultyFactor,
   keyIsUnderDifficultyThreshold: (pubKeyHex, knownKeys) =>
-    Buffer.from(pubKeyHex, 'hex').readBigInt64BE() < BigInt(constants.maxKey64 * (1.0 - getCurrentDifficultyFactor(knownKeys))),
-
-  normalizedZeroBoardKeyDifficultyFactor: (pubKeyHex) =>
-    Buffer.from(pubKeyHex, 'hex').readBigInt64BE() / BigInt(constants.maxKey64 * (1.0 - getCurrentDifficultyFactor({})))
+    Buffer.from(pubKeyHex, 'hex').readBigInt64BE() < BigInt(constants.maxKey64 * (1.0 - getCurrentDifficultyFactor(knownKeys)))
 };
