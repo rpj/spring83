@@ -60,7 +60,7 @@ Other environment variables you should set:
 
 ### `findkey`
 
-**Update**: I'll maintain this script for good measure, but you should probably just use [PT's Go keyfinder](https://github.com/pteichman/ahoy) as it is undoubtedly <i>much</i> faster than this one.
+**Update**: This script is left in the repo for posterity, but [PT's Go keyfinder](https://github.com/pteichman/ahoy) is <i>much</i> faster and generates canonically-formatted keys as well. It's what I'm using now.
 
 Randomly generates Ed25519 key pairs until one matching the specified format has been found.
 
@@ -72,4 +72,16 @@ The output format matches the format that [Robin's client expects](https://githu
 
 Robin has an impressive demo client available [here](https://github.com/robinsloan/spring-83-spec/tree/main/demo-client). His host is running at [https://bogbody.biz](https://bogbody.biz).
 
-This implementation is running at [https://0l0.lol](https://0l0.lol). If you'd like to be listed in the public boards' list here, just send mail to include-me-s83@0l0.lol with your hex public key as the subject.
+This implementation is running at [https://0l0.lol](https://0l0.lol) and [https://spring83.rkas.net](https://spring83.rkas.net). If you'd like to be listed here, just send mail to include-me-s83@0l0.lol with your hex public key as the subject or simply create a PR with your key added to [`public-boards.json`](/public-boards.json).
+
+### Other known implementations
+
+| Name                       | Lang                | Instance                 |
+| -------------------------- | ------------------- | -------------------------|
+| [davemenninger/exspring83] | elixir              |                          |
+| [llimllib/springer]        | golang              |                          |
+| [motevets/s83]             | golang              |                          |
+| [pteichman/ahoy]           | golang              |                          |
+| [royragsdale/s83]          | golang              |                          |
+| [cellu_cc/so83-gpu (gitlab)](https://gitlab.com/cellu_cc/so83-gpu) | opencl | |
+| [michael-lazar/lets-dance] | python              | https://spring83.mozz.us |
