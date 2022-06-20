@@ -239,6 +239,10 @@ async function main () {
     renderMap.key = req.params.key;
 
     if (req.params.key === constants.testPublicKey) {
+      const umsDate = new Date();
+      renderMap.datetime = umsDate.toISOString().replace(/\.\d{3}Z$/, 'Z')
+      renderMap.rgb1 = {red: Math.floor(Math.random() * 255), green: Math.floor(Math.random() * 255), blue: Math.floor(Math.random() * 255)};
+      renderMap.rgb2 = {red: Math.floor(Math.random() * 255), green: Math.floor(Math.random() * 255), blue: Math.floor(Math.random() * 255)};
       reply.code(200);
       return mustache.render(testKeyTmpl, renderMap);
     }
