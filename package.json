@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "semistandard --fix --verbose findkey putnew serve *.js"
+    "lint": "semistandard --fix --verbose findkey putnew serve *.js test/*.js",
+    "test": "tape test/*.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +17,7 @@
     "undici": "^5.5.1"
   },
   "devDependencies": {
-    "semistandard": "^16.0.1"
+    "semistandard": "^16.0.1",
+    "tape": "^5.5.3"
   }
 }

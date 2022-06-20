@@ -29,12 +29,12 @@ const constants = Object.freeze({
   defaultContentPath: '.content',
   defaultFQDN: 'example.com',
   strictVerification: true,
-  maxKey64: (2 ** 64 - 1),
+  difficultyFactorExp: 4,
   ttlCheckFreqMinutes: 11,
   keypairFilenamePrefix: 'spring-83-keypair',
   pubBoardsJsonFileName: 'public-boards.json',
   pubBoardRefreshFreqMinutes: 3,
-  testPublicKey: 'ca93846ae61903a862d44727c16fed4b80c0522cab5e5b8b54763068b83e0623'
+  testPublicKey: 'ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583'
 });
 
 function keyPairFilename (publicKey, root = __dirname) {
@@ -55,7 +55,7 @@ async function findKeypairFile (publicKey, root) {
     return findKeypairFile(Buffer.from(publicKey).toString('hex'), root);
   }
   const pkPrefix = publicKey.slice(0, 12);
-  return path.join(root, await (await fs.promises.readdir(root)).find((p) => {
+  return path.join(root, await (await fs.promises.readdir(path.resolve(root))).find((p) => {
     const parsed = path.parse(p);
     return parsed.name.indexOf(constants.keypairFilenamePrefix) === 0 && parsed.name.indexOf(pkPrefix) !== -1;
   }));
@@ -71,7 +71,7 @@ async function boardExistsLocally (contentDir, pubKey) {
 }
 
 // 'strict' only allows keys that are usable *now* to match
-function pubKeyHexIsValid (pubKeyHex, strict = false) {
+function pubKeyHexIsValid (pubKeyHex, strict = false, injectDate) {
   const match = pubKeyHex.match(constants.keyMatchRegex);
 
   if (match && match.length === 3) {
@@ -82,7 +82,7 @@ function pubKeyHexIsValid (pubKeyHex, strict = false) {
       return false;
     }
 
-    const curYearTwoDigit = (new Date().getYear() - 100);
+    const curYearTwoDigit = ((injectDate || new Date()).getYear() - 100);
 
     if (!(lastTwoDigitsNum > curYearTwoDigit - 2 && lastTwoDigitsNum <= curYearTwoDigit + 1)) {
       return false;
@@ -99,7 +99,7 @@ function pubKeyHexIsValid (pubKeyHex, strict = false) {
 }
 
 function getCurrentDifficultyFactor (knownKeys) {
-  return (Object.keys(knownKeys).length / constants.maximumNumberOfBoards) ** 4;
+  return (Object.keys(knownKeys).length / constants.maximumNumberOfBoards) ** constants.difficultyFactorExp;
 }
 
 async function readKeypairFile (filePath) {
@@ -132,7 +132,7 @@ function keyIsUnderDifficultyThreshold (pubKey, knownKeys) {
     return keyIsUnderDifficultyThreshold(Buffer.from(pubKey, 'hex'), knownKeys);
   }
 
-  return pubKey.readBigInt64BE() < BigInt(constants.maxKey64 * (1.0 - getCurrentDifficultyFactor(knownKeys)));
+  return pubKey.readBigUInt64BE() < BigInt((2 ** 64) * (1.0 - getCurrentDifficultyFactor(knownKeys))) - BigInt(1);
 }
 
 module.exports = {
@@ -144,5 +144,6 @@ module.exports = {
   findKnownKeys,
   keyPairFilename,
   readKeypairFile,
-  boardExistsLocally
+  boardExistsLocally,
+  findKeypairFile
 };
