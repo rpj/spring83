@@ -8,11 +8,27 @@
       height: 100%;
       background-image: linear-gradient(to top, #fad0c4 0%, #ffd1ff 100%);
     }
+    #footer {
+      position: fixed;
+      bottom: 2vh;
+      left: 2vh;
+      font-size: 12px;
+    }
+    #swatch {
+      display: inline-block;
+      vertical-align: middle;
+      background-image: linear-gradient(rgb({{ rgb1.red }}, {{ rgb1.green }}, {{ rgb1.blue }}) 0%, rgb({{ rgb2.red }}, {{ rgb2.green }}, {{ rgb2.blue }}) 100%);
+      width: 10px;
+      height: 10px;
+      border: thin solid black;
+    }
     </style>
   </head>
   <body>
     <h1>🌸 Spring '83 Test Page</h1>
     <p>This server is proud to accept the honor of the <a href="https://bogbody.biz/ca93846ae61903a862d44727c16fed4b80c0522cab5e5b8b54763068b83e0623" target="_blank">first indepedently-operating Spring '83</a> host.</p>
     <p>This server's authors are admitedly enamoured with the protocol.</p>
+    <div id="footer">This page was generated just for you at {{ datetime }}. To ensure randomness, please enjoy this custom color swatch: <div id="swatch"></div></div>
   </body>
+  <time datetime="{{ datetime }}">
 </html>
