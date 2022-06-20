@@ -80,7 +80,7 @@ This implementation is running at [https://0l0.lol](https://0l0.lol) and [https:
 | -------------------------- | ------------------- | -------------------------|
 | [davemenninger/exspring83](https://github.com/davemenninger/exspring83) | elixir | |
 | [llimllib/springer](https://github.com/llimllib/springer) | golang | |
-| [motevets/s83](https://github.com/motevets/s83) | golang | |
+| [motevets/s83](https://github.com/motevets/s83) | golang | https://spring83.kindrobot.ca/ |
 | [pteichman/ahoy](https://github.com/pteichman/ahoy) | golang | |
 | [royragsdale/s83](https://github.com/royragsdale/s83) | golang | |
 | [cellu_cc/so83-gpu (gitlab)](https://gitlab.com/cellu_cc/so83-gpu) | opencl | |
