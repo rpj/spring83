@@ -7,7 +7,6 @@ const path = require('path');
 const cheerio = require('cheerio');
 const ed = require('@noble/ed25519');
 const mustache = require('mustache');
-const app = require('fastify')({ logger: true });
 const {
   constants,
   findKnownKeys,
@@ -16,6 +15,9 @@ const {
   keyIsUnderDifficultyThreshold,
   boardExistsLocally
 } = require('./common');
+
+const app = require('fastify')({ logger: true });
+app.register(require('@fastify/cors'), constants.corsOptions);
 
 const expectPutHeaders = Object.freeze({
   'content-type': constants.contentType,

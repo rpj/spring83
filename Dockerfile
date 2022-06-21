@@ -2,7 +2,7 @@ FROM node:16 as base
 WORKDIR /usr/src/spring83
 COPY package*.json ./
 RUN npm install
-COPY common.js .
+COPY common/*.js common/
 COPY *.tmpl.html .
 COPY serve .
 COPY public-boards.json .
