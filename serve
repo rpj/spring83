@@ -22,27 +22,6 @@ app.register(require('@fastify/cors'), constants.corsOptions);
 const expectPutHeaders = Object.freeze({
   'content-type': constants.contentType,
   [constants.headerNames.version]: constants.protocolVersion,
-  'if-unmodified-since': (v, context) => {
-    if (context?.multipleUnmodifiedSinceHeaders) {
-      return 400;
-    }
-
-    const parsed = Date.parse(v);
-
-    if (Number.isNaN(parsed)) {
-      return 400;
-    }
-
-    const parsedDate = new Date(parsed);
-    const checkTime = new Date(Date.now() + constants.unmodifiedSinceTimeFudgeMs);
-
-    if (parsedDate > checkTime) {
-      return 400;
-    }
-
-    context.multipleUnmodifiedSinceHeaders = 1;
-    context.ifUnmodifiedSinceUNIXTime = parsed;
-  },
   [constants.headerNames.signature]: async (v, context) => {
     const sigHex = v;
 
@@ -82,7 +61,11 @@ async function validateHeader (context, [header, val]) {
 }
 
 function allExpectedHeadersExist (expectedMap, req) {
-  return Object.keys(expectedMap).every(k => Boolean(req.headers[k]));
+  const rv = Object.keys(expectedMap).map(k => req.headers[k]);
+  if (rv.some(x => !x)) {
+    app.log.warn(`allExpectedHeadersExist failure(s): ${rv.join(', ')}`);
+  }
+  return !rv.some(x => !x);
 }
 
 function applyGenericGETReplyHeaders (reply, isRoot = false) {
@@ -104,17 +87,17 @@ function applyGenericGETReplyHeaders (reply, isRoot = false) {
 async function ttlKiller (knownKeys, contentDir) {
   const expiry = new Date(Date.now() - constants.boardTTLDays * 24 * 60 * 60 * 1000);
   app.log.info(`ttlKiller awake, expiry=${expiry}`);
-  for (const [key, { metadata: { headers } }] of Object.entries(knownKeys)) {
-    const ttlCheck = Date.parse(headers['if-unmodified-since']);
+  for (const [key, { metadata: { ingest } }] of Object.entries(knownKeys)) {
+    const ttlCheck = Date.parse(ingest);
     if (ttlCheck < expiry) {
-      app.log.warn(`TTL expired for ${key} ${headers['if-unmodified-since']}`);
+      app.log.warn(`TTL expired for ${key} ${ingest}`);
       const pPrefix = path.join(contentDir, key);
       await fs.promises.rm(pPrefix + '.html');
       await fs.promises.rm(pPrefix + '.json');
       delete knownKeys[key];
     } else {
       const daysTtl = Number((ttlCheck - expiry) / (1000 * 60 * 60 * 24)).toFixed(0);
-      app.log.info(`${key} (${headers['if-unmodified-since']}) has ${daysTtl} days TTL`);
+      app.log.info(`${key} (${ingest}) has ${daysTtl} days TTL`);
       knownKeys[key].metadata.daysTtl = daysTtl;
     }
   }
@@ -176,7 +159,7 @@ async function main () {
       boardPostCode = 200;
       const metaCheck = documentHasRequiredMeta(req); // check in initialPutChecks prior, so will have a value
 
-      if (metaCheck <= Date.parse(headers['if-unmodified-since'])) {
+      if (headers['if-unmodified-since'] && metaCheck <= Date.parse(headers['if-unmodified-since'])) {
         app.log.warn('past if-unmodified-since');
         reply.code(409);
         return;
@@ -259,8 +242,8 @@ async function main () {
       return render();
     }
 
-    const { body, metadata: { headers } } = knownKeys[req.params.key];
-    if (!body || !headers?.['if-unmodified-since'] || !headers[constants.headerNames.signature]) {
+    const { body, metadata: { headers, ingest } } = knownKeys[req.params.key];
+    if (!body || !headers[constants.headerNames.signature]) {
       app.log.warn('invalid content fields');
       return;
     }
@@ -273,7 +256,7 @@ async function main () {
 
     reply.code(200);
     reply.header(constants.headerNames.signature, sig);
-    reply.header('last-modified', new Date(headers['if-unmodified-since']).toUTCString());
+    reply.header('last-modified', new Date(ingest).toUTCString());
     return body;
   });
 
