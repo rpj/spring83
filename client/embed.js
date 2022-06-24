@@ -22,10 +22,26 @@ async function embedSpringBoard (pubkey, contEleId, doneCb, intContTagType = 'ht
       }
     }
 
-    const cont = document.createElement(intContTagType);
-    s83.shadowRoot.appendChild(cont);
-    cont.innerHTML = body;
-    const upDate = new Date(Date.parse(res.headers.get('last-modified')));
-    doneCb?.(s83, upDate);
+    try {
+      const cont = document.createElement(intContTagType);
+      const parsedDoc = new DOMParser().parseFromString(body, 'text/html'); // eslint-disable-line no-undef
+      let targetNode = parsedDoc.firstChild;
+
+      while (!targetNode.firstChild || targetNode.nodeName === '#comment') {
+        targetNode = targetNode.nextSibling;
+      }
+
+      if (targetNode) {
+        cont.appendChild(targetNode);
+      } else {
+        cont.innerHTML = body;
+      }
+
+      s83.shadowRoot.appendChild(cont);
+      const upDate = new Date(Date.parse(res.headers.get('last-modified')));
+      doneCb?.(s83, upDate);
+    } catch (err) {
+      console.error(`Unparseable board: ${err}`);
+    }
   }
 }
