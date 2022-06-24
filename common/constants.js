@@ -38,6 +38,13 @@ module.exports = {
       methods: ['GET', 'PUT'],
       allowedHeaders: ['Content-Type', 'If-Modified-Since', 'Spring-Signature', 'Spring-Version'],
       exposedHeaders: ['Content-Type', 'Last-Modified', ...Object.values(headerNames)]
+    },
+    putnewMinifyOptions: {
+      collapseBooleanAttributes: true,
+      collapseInlineTagWhitespace: true,
+      collapseWhitespace: true,
+      minifyCSS: true,
+      conservativeCollapse: true
     }
   })
 };

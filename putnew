@@ -7,34 +7,42 @@ const path = require('path');
 const cheerio = require('cheerio');
 const { fetch } = require('undici');
 const ed = require('@noble/ed25519');
+const { minify } = require('html-minifier-terser');
 const { constants, findKnownKeys } = require('./common');
 
-async function putOneBytes (host, privKeyHex, htmlFileBytes, pubKey) {
-  if (htmlFileBytes.length > constants.maximumContentLength) {
-    console.error(`ERROR: ${pubKey} is too large by ` +
-      `${htmlFileBytes.length - constants.maximumContentLength} bytes (${htmlFileBytes.length})!`);
-    process.exit(-1);
-  }
+const umsDate = new Date();
 
+async function preprocess (htmlFileBytes, pubKeyHex) {
   const htmlParsed = cheerio.load(htmlFileBytes);
-  const umsDate = new Date();
-  const unmodifiedSince = umsDate.toUTCString();
 
   // append required <time> tag if not already present
   if (htmlParsed('time').length === 0) {
     const ogByteLen = htmlFileBytes.length;
     htmlParsed('html').append(`<time datetime="${umsDate.toISOString().replace(/\.\d{3}Z$/, 'Z')}">`);
     htmlFileBytes = Buffer.from(htmlParsed.root().html(), 'utf8');
-    console.log(`Appended <time> to ${pubKey} which added ${htmlFileBytes.length - ogByteLen} bytes.`);
-    if (htmlFileBytes.length > constants.maximumContentLength) {
-      console.error('ERROR: This board won\'t fit anymore! Bailing...');
-      process.exit(-2);
-    }
+    console.log(`${pubKeyHex}.html: appended <time>, which added ${htmlFileBytes.length - ogByteLen} bytes`);
   }
 
+  const preMiniByteLen = htmlFileBytes.length;
+  htmlFileBytes = Buffer.from(await minify(htmlFileBytes.toString('utf8'), constants.putnewMinifyOptions), 'utf8');
+  const minifiedBytes = preMiniByteLen - htmlFileBytes.length;
+
+  if (htmlFileBytes.length > constants.maximumContentLength) {
+    console.error(`${pubKeyHex}.html: ERRRO, still too large! By ` +
+      `${htmlFileBytes.length - constants.maximumContentLength} bytes (${htmlFileBytes.length})!`);
+    process.exit(-1);
+  }
+
+  console.log(`${pubKeyHex}.html: minified ${Number((minifiedBytes / preMiniByteLen) * 100).toFixed(0)}%` +
+    ` (${minifiedBytes} bytes) -> ${htmlFileBytes.length} total`);
+  return htmlFileBytes;
+}
+
+// expects htmlFileBytes is preprocessed
+async function putOneBytes (host, privKeyHex, htmlFileBytes, pubKeyHex) {
+  const unmodifiedSince = umsDate.toUTCString();
   const sigBytes = await ed.sign(htmlFileBytes, privKeyHex);
   const sigHex = Buffer.from(sigBytes).toString('hex');
-  const pubKeyHex = Buffer.from(await ed.getPublicKey(privKeyHex)).toString('hex');
   const fetchUri = `${host}/${pubKeyHex}`;
   const fetchRes = await fetch(fetchUri, {
     method: 'PUT',
@@ -55,8 +63,9 @@ async function putOneBytes (host, privKeyHex, htmlFileBytes, pubKey) {
 }
 
 async function putOne (host, privKeyHex, htmlFile) {
-  const htmlFileBytes = fs.readFileSync(htmlFile);
-  return putOneBytes(host, privKeyHex, htmlFileBytes, htmlFile);
+  const pubKeyHex = Buffer.from(await ed.getPublicKey(privKeyHex)).toString('hex');
+  const htmlFileBytes = await preprocess(fs.readFileSync(htmlFile), pubKeyHex);
+  return putOneBytes(host, privKeyHex, htmlFileBytes, pubKeyHex);
 }
 
 async function main () {
@@ -68,9 +77,11 @@ async function main () {
     console.log(`Posting ${Object.keys(boardKeys).length} boards to: ${postToHostsCSV.join(', ')}`);
 
     await Promise.all(Object.entries(await findKnownKeys(path.resolve(boardsPath), true))
-      .map(async ([pubKey, { body, metadata }]) => await Promise.all(
-        postToHostsCSV.map(async (host) => await putOneBytes(host, metadata.private, body, pubKey))
-      )));
+      .map(async ([, { body, metadata }]) => {
+        const bodyPreProc = await preprocess(body, metadata.public);
+        return await Promise.all(postToHostsCSV.map(async (host) =>
+          await putOneBytes(host, metadata.private, bodyPreProc, metadata.public)));
+      }));
 
     process.exit(0);
   }
