@@ -66,7 +66,7 @@ Randomly generates Ed25519 key pairs until one matching the specified format has
 
 If called with `--strict`, will _only_ return when a key pair is found that is valid _this calendar year_.
 
-The output format matches the format that [Robin's client expects](https://github.com/robinsloan/spring-83-spec/tree/main/demo-client) and will be named in the same format.
+The output format matches the format that [the client](https://followersentinel.com/) and will be named in the same format.
 
 ## Interacting
 
