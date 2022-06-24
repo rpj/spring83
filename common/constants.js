@@ -1,3 +1,5 @@
+const path = require('path');
+
 const headerNames = {
   difficulty: 'spring-difficulty',
   signature: 'spring-signature',
@@ -21,9 +23,12 @@ module.exports = {
       'data:': ['img-src']
     },
     headerNames,
-    rootTemplateName: 'root.tmpl.html',
-    notFoundTmplName: '404.tmpl.html',
-    testKeyTmplName: 'testkey.tmpl.html',
+    clientFiles: {
+      rootTmpl: 'root.tmpl.html',
+      notFoundTmpl: '404.tmpl.html',
+      testKeyTmpl: 'testkey.tmpl.html',
+      embedJsContent: path.join('client', 'embed.js')
+    },
     defaultContentPath: '.content',
     defaultFQDN: 'example.com',
     strictVerification: true,

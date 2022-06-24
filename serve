@@ -114,10 +114,14 @@ async function refreshPubBoards (contentDir) {
   } catch {}
 }
 
+async function loadClientFiles () {
+  return Object.fromEntries(await Promise.all(
+    Object.entries(constants.clientFiles).map(async ([namePfx, fileName]) =>
+      ([namePfx, (await fs.promises.readFile(path.join(__dirname, fileName))).toString('utf8')]))));
+}
+
 async function main () {
-  const rootTmpl = (await fs.promises.readFile(path.join(__dirname, constants.rootTemplateName))).toString('utf8');
-  const notFoundTmpl = (await fs.promises.readFile(path.join(__dirname, constants.notFoundTmplName))).toString('utf8');
-  const testKeyTmpl = (await fs.promises.readFile(path.join(__dirname, constants.testKeyTmplName))).toString('utf8');
+  const { rootTmpl, notFoundTmpl, testKeyTmpl, embedJsContent } = await loadClientFiles();
   const contentDir = path.resolve(process.env.SPRING83_CONTENT_DIR || path.join(__dirname, constants.defaultContentPath));
   const fqdn = process.env.SPRING83_FQDN || constants.defaultFQDN;
   const contactAddr = process.env.SPRING83_CONTACT_ADDR;
@@ -128,6 +132,12 @@ async function main () {
   await refreshPubBoards(contentDir);
 
   app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
+
+  app.get('/embed.js', (req, reply) => {
+    reply.code(200);
+    reply.type('text/javascript');
+    return embedJsContent;
+  });
 
   app.put('/:key', async (req, reply) => {
     if (req.params?.key === constants.testPublicKey) {
@@ -272,7 +282,7 @@ async function main () {
       fqdn,
       contactAddr,
       boards: Object.keys(knownKeys).map(keyMapper),
-      pubBoards: pubBoards.filter(([, exists]) => exists === true).map(([key]) => key).map(keyMapper)
+      pubBoards: pubBoards.filter(([, exists]) => exists === true).map(([key]) => key).sort().map(keyMapper)
     };
 
     return mustache.render(rootTmpl, renderMap);

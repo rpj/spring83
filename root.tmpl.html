@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=1024px, initial-scale=1">
     <title>🌸 A Spring '83 Server</title>
     <style type="text/css">
     html {
@@ -9,44 +9,68 @@
       background-image: linear-gradient(to top, #fad0c4 0%, #ffd1ff 100%);
     }
     #ttl { font-style: italic; font-size: 0.7em; }
+    #m { width: 528px; }
+    #c { display: inline-flex;}
+    #b {display: none; margin: 30px;contain: content;width:374px; height:528px; background-color: whitesmoke; border-radius: 3%;}
+    #board {width:100%; height:100%;overflow-x: hidden;overflow-y: auto;padding: 30px;font-size: 95%;}
+    .board_link {font-family: monospace;font-size: 1.1em;}
     </style>
+    <script src="/embed.js"></script>
+    <script defer>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('x').addEventListener('click', (e) => (document.getElementById('b').style.display = 'none'));
+        [...document.getElementsByTagName('a')].filter((x) => x.dataset.s83Key).forEach((e) =>
+          e.addEventListener('click', (ele) => embedSpringBoard(e.dataset.s83Key, 'board',
+            (ele) => (ele.parentElement.style.display = 'inline-flex')))
+        );
+      });
+    </script>
   </head>
   <body>
-    <h1>🌸 A <a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring '83</a> server.</h1>
-    {{ #pubBoards.length }}
-      <h3>Publicly-listed boards <span id="ttl">(time-to-live)</i>:</h3>
-      <div>
-        <ul>
-        {{ #pubBoards }}
-            <li><a href="/{{ key }}" target="_blank">{{ key_display }}</a> <i>({{ #ttl }}{{ ttl }} days{{ /ttl }}{{ ^ttl }}New!{{ /ttl }})</i></li>
-        {{ /pubBoards }}
-        </ul>
-      </div>
-      <p>Want to be included here? <a href="mailto:include-my-key-{{ contactAddr }}">Drop a line</a> with your public key (in hex!) as the subject line.</p>
-    {{ /pubBoards.length }}
-    {{ #boards.length }}
-      <h3>{{ boards.length }} hosted boards.</h3>
-    {{ /boards.length }}
-    <p>
-      Want to <a href="https://github.com/rpj/spring83#putnew" target="_blank">post</a>?
-      <a href="https://github.com/rpj/spring83#findkey" target="_blank">Find</a> a keypair!
-    </p>
-    <p>
-      (Mostly) conforming to
-      <a href="https://github.com/robinsloan/spring-83-spec/blob/0f63d3d25125106ad23428bcdaeb43b2c7840d53/draft-20220616.md" target="_blank"><code>draft-20220616</code></a>
-      of the specification.
-    </p>
-    <p>
-      Illegal, abusive, discriminatory, hateful, or unethical content is not allowed.<br/>
-      The host reserves the right to remove boards at will.
-      {{ #contactAddr }}
-      <a href="mailto:{{ contactAddr }}">Contact.</a>
-      {{ /contactAddr }}
-    </p>
-    <p>
-      Source on <a href="https://github.com/rpj/spring83" target="_blank">GitHub</a>.
-    </p>
-    <p>
-    </p>
-  </body>
+    <div id="c">
+      <div id="m">
+        <h1>🌸 A <a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring '83</a> server.</h1>
+        <h2 style="text-align: center;">Boards are best viewed with<br/>the <a href="https://followersentinel.com/" target="_blank">FollowerSentinel</a>.</h2>
+        {{ #pubBoards.length }}
+          <h3>Publicly-listed boards <span id="ttl">(time-to-live)</i>:</h3>
+          <div>
+            <ul>
+            {{ #pubBoards }}
+                <li><a class="board_link" href="#" data-s83-key="{{ key }}">{{ key_display }}</a> <i>({{ #ttl }}{{ ttl }} days{{ /ttl }}{{ ^ttl }}New!{{ /ttl }})</i></li>
+            {{ /pubBoards }}
+            </ul>
+          </div>
+          <p>Want to be included here? <a href="mailto:include-me-{{ contactAddr }}">Drop a line</a> with your public key (in hex!) as the subject line.</p>
+        {{ /pubBoards.length }}
+        {{ #boards.length }}
+          <h3>{{ boards.length }} hosted boards.</h3>
+        {{ /boards.length }}
+        <p>
+          Want to <a href="https://github.com/rpj/spring83#putnew" target="_blank">post</a>?
+          <a href="https://github.com/rpj/spring83#findkey" target="_blank">Find</a> a keypair!
+        </p>
+        <p>
+          (Mostly) conforming to
+          <a href="https://github.com/robinsloan/spring-83-spec/blob/0f63d3d25125106ad23428bcdaeb43b2c7840d53/draft-20220616.md" target="_blank"><code>draft-20220616</code></a>
+          of the specification.
+        </p>
+        <p>
+          Illegal, abusive, discriminatory, hateful, or unethical content is not allowed.
+          The host reserves the right to remove boards at will.
+          {{ #contactAddr }}
+          <a href="mailto:{{ contactAddr }}">Contact.</a>
+          {{ /contactAddr }}
+        </p>
+        <p>
+          Source on <a href="https://github.com/rpj/spring83" target="_blank">GitHub</a>.
+        </p>
+        <p>
+        </p>
+      </body>
+    </div>
+    <div id="b">
+      <div style="position: absolute; right: 10px; top: 10px; z-index: 99;"><a href="#" id="x">X</a></div>
+      <div id="board"></div>
+    </div>
+  </div>
 </html>
