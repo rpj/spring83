@@ -72,7 +72,7 @@ The output format matches the format that [the client](https://followersentinel.
 
 Robin has a truly impressive client available [online here](https://followersentinel.com/) ([GitHub](https://github.com/robinsloan/the-oakland-follower-sentinel)). It is the ideal way to view and post boards from and to multiple S83 hosts. His host is running at [https://bogbody.biz](https://bogbody.biz).
 
-This implementation is running at [https://0l0.lol](https://0l0.lol) and [https://spring83.rkas.net](https://spring83.rkas.net). If you'd like to be listed here, just send mail to include-me-s83@0l0.lol with your hex public key as the subject, or submit a PR with your key added to [`public-boards.json`](/public-boards.json).
+This implementation is running at [https://0l0.lol](https://0l0.lol) and [https://spring83.rkas.net](https://spring83.rkas.net). If you'd like to be listed here, just send mail to include-my-key@0l0.lol with your hex public key as the subject, or submit a PR with your key added to [`public-boards.json`](/public-boards.json).
 
 ### Other known implementations
 
