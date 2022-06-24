@@ -117,7 +117,7 @@ async function refreshPubBoards (contentDir) {
 async function loadClientFiles () {
   return Object.fromEntries(await Promise.all(
     Object.entries(constants.clientFiles).map(async ([namePfx, fileName]) =>
-      ([namePfx, (await fs.promises.readFile(path.join(__dirname, fileName))).toString('utf8')]))));
+      ([namePfx, (await fs.promises.readFile(path.join(__dirname, 'client', fileName))).toString('utf8')]))));
 }
 
 async function main () {

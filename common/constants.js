@@ -1,5 +1,3 @@
-const path = require('path');
-
 const headerNames = {
   difficulty: 'spring-difficulty',
   signature: 'spring-signature',
@@ -27,7 +25,7 @@ module.exports = {
       rootTmpl: 'root.tmpl.html',
       notFoundTmpl: '404.tmpl.html',
       testKeyTmpl: 'testkey.tmpl.html',
-      embedJsContent: path.join('client', 'embed.js')
+      embedJsContent: 'embed.js'
     },
     defaultContentPath: '.content',
     defaultFQDN: 'example.com',

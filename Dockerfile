@@ -3,7 +3,7 @@ WORKDIR /usr/src/spring83
 COPY package*.json ./
 RUN npm install
 COPY common/*.js common/
-COPY client/*.js client/
+COPY client/* client/
 COPY *.tmpl.html .
 COPY serve .
 COPY public-boards.json .
