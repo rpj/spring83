@@ -15,15 +15,25 @@
     #b {display: none; margin-left: 30px;contain: content;width:374px; height:572px; background-color: whitesmoke; border-radius: 3%;}
     #board {width:100%; height:100%;overflow-x: hidden;overflow-y: auto;padding: 30px;font-size: 95%;}
     .board_link {font-family: monospace;font-size: 1.1em;}
+    .sel {text-shadow: 0 0 5px #ba8273;}
     </style>
     <script src="/embed.js"></script>
     <script defer>
       document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('x').addEventListener('click', (e) => (document.getElementById('b').style.display = 'none'));
+        document.getElementById('x').addEventListener('click', (e) => {
+          document.getElementById('b').style.display = 'none';
+          [...document.getElementsByTagName('a')].forEach((x) => x.classList.remove('sel'));
+        });
+
         [...document.getElementsByTagName('a')].filter((x) => x.dataset.s83Key).forEach((e) =>
-          e.addEventListener('click', (ele) => embedSpringBoard(e.dataset.s83Key, 'board',
-            (ele) => (ele.parentElement.style.display = 'inline-flex')))
-        );
+          e.addEventListener('click', async (ele) => {
+            const { containerElement } = await embedSpringBoard(e.dataset.s83Key, 'board');
+            containerElement.parentElement.style.display = 'inline-flex';
+            e.classList.add('sel');
+            [...document.getElementsByTagName('a')].filter((x) => x.dataset.s83Key !== e.dataset.s83Key)
+              .forEach((x) => x.classList.remove('sel'));
+          }
+        ));
       });
     </script>
   </head>
