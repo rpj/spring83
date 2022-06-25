@@ -15,8 +15,10 @@ $ npm install
 ### `putnew`
 
 ```
-To put a single board: putnew host privKeyHex htmlFile
-To put path of boards: putnew boardPath hostsCommaSeperated
+To put a single board: /home/ubuntu/spring83/putnew host privKeyHex htmlFile
+To put path of boards: /home/ubuntu/spring83/putnew boardPath hostsCommaSeperated
+
+Boards will be minified by default. Pass --no-minify to disable this.
 ```
 
 Operates in two modes: single board PUT or multi-board PUT.
