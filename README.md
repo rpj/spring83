@@ -52,18 +52,18 @@ Other environment variables you should set:
 
 ### `putnew`
 
-Available on [Docker Hub as `0l0lol/putnew`](https://hub.docker.com/repository/docker/0l0lol/putnew) to
-enable usage without needing `node` locally, like so:
-
-```
-$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:1.0 ...
-```
-
 ```
 To put a single board: /home/ubuntu/spring83/putnew host privKeyHex htmlFile
 To put path of boards: /home/ubuntu/spring83/putnew boardPath hostsCommaSeperated
 
 Boards will be minified by default. Pass --no-minify to disable this.
+```
+
+Available on [Docker Hub as `0l0lol/putnew`](https://hub.docker.com/repository/docker/0l0lol/putnew) to
+enable usage without needing `node` locally, like so:
+
+```
+$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:1.0 ...
 ```
 
 Operates in two modes: single board PUT or multi-board PUT.
