@@ -39,8 +39,7 @@ Runs a Spring-83 server on port specified by environment variable `SPRING83_BIND
 
 Writes boards into `SPRING83_CONTENT_DIR` (or `./.content` by default).
 
-If Docker is available, an [image is published to Docker Hub](https://hub.docker.com/repository/docker/0l0lol/serve) you may use or `serve`
-can be run from this repo with `docker compose up --build -d`.
+If Docker is available, an image is published to Docker Hub [as <code>0l0lol/serve</code>](https://hub.docker.com/r/0l0lol/serve) or `serve` can be run from this repo directly: `docker compose up --build -d serve`.
 
 `SPRING83_CONTENT_DIR_HOST` must be specified to be the host-side path for which `SPRING83_CONTENT_DIR` will map to internally.
 
@@ -59,11 +58,11 @@ To put path of boards: /home/ubuntu/spring83/putnew boardPath hostsCommaSeperate
 Boards will be minified by default. Pass --no-minify to disable this.
 ```
 
-Available on [Docker Hub as `0l0lol/putnew`](https://hub.docker.com/repository/docker/0l0lol/putnew) to
+Available on [Docker Hub as `0l0lol/putnew`](https://hub.docker.com/r/0l0lol/putnew/tags) to
 enable usage without needing `node` locally, like so:
 
 ```
-$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:1.0 ...
+$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:latest ...
 ```
 
 Operates in two modes: single board PUT or multi-board PUT.
@@ -77,9 +76,9 @@ Will insert the required `<time datetime="...">` tag, with the appropriate `date
 An example via the Docker Hub image:
 
 ```
-$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:1.0 https://0l0.lol ... f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html
+$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:latest https://0l0.lol ... f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html
 f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: appended <time>, which added 84 bytes
-f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: minified 0% (0 bytes) -> 96 total
+f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: minified 4% (5 bytes) -> 107 total
 https://0l0.lol PUT https://0l0.lol/f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623 200
 ```
 
@@ -105,10 +104,10 @@ it will post both boards to both listed hosts.
 An example via the Docker Hub image:
 
 ```
-$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:1.0 ./dockerTest https://0l0.lol
+$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:latest spring83/dt-dir/ https://0l0.lol
 Posting 1 boards to: https://0l0.lol
-f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: appended <time>, which added 84 bytes
-f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: minified 0% (0 bytes) -> 96 total
+f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: appended <time>, which added 83 bytes
+f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: minified 4% (5 bytes) -> 107 total
 https://0l0.lol PUT https://0l0.lol/f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623 200
 ```
 

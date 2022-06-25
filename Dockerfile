@@ -18,5 +18,4 @@ CMD ["/usr/src/spring83/serve"]
 FROM base as putnew
 COPY putnew .
 WORKDIR /home
-CMD ["/usr/src/spring83/putnew"]
 ENTRYPOINT ["/usr/src/spring83/putnew"]

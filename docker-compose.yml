@@ -14,6 +14,14 @@ services:
         source: ${SPRING83_CONTENT_DIR_HOST:?"Must define SPRING83_CONTENT_DIR_HOST as the absolute path to logs on the host."}
         target: /content
 
+  putnew:
+    container_name: putnew
+    build: &default-build-spec
+      context: .
+      dockerfile: Dockerfile
+      target: putnew
+    network_mode: "host"
+
 volumes:
   content:
     external: true
