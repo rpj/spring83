@@ -104,7 +104,7 @@ it will post both boards to both listed hosts.
 An example via the Docker Hub image:
 
 ```
-$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:latest spring83/dt-dir/ https://0l0.lol
+$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:latest ./dockerTest/ https://0l0.lol
 Posting 1 boards to: https://0l0.lol
 f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: appended <time>, which added 83 bytes
 f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: minified 4% (5 bytes) -> 107 total
