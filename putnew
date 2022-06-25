@@ -10,6 +10,7 @@ const ed = require('@noble/ed25519');
 const { minify } = require('html-minifier-terser');
 const { constants, findKnownKeys } = require('./common');
 
+const cliOpts = require('yargs/yargs')(process.argv.slice(2)).default({ minify: true }).parse();
 const umsDate = new Date();
 
 async function preprocess (htmlFileBytes, pubKeyHex) {
@@ -23,9 +24,13 @@ async function preprocess (htmlFileBytes, pubKeyHex) {
     console.log(`${pubKeyHex}.html: appended <time>, which added ${htmlFileBytes.length - ogByteLen} bytes`);
   }
 
-  const preMiniByteLen = htmlFileBytes.length;
-  // htmlFileBytes = Buffer.from(await minify(htmlFileBytes.toString('utf8'), constants.putnewMinifyOptions), 'utf8');
-  const minifiedBytes = preMiniByteLen - htmlFileBytes.length;
+  if (cliOpts.minify) {
+    const preMiniByteLen = htmlFileBytes.length;
+    htmlFileBytes = Buffer.from(await minify(htmlFileBytes.toString('utf8'), constants.putnewMinifyOptions), 'utf8');
+    const minifiedBytes = preMiniByteLen - htmlFileBytes.length;
+    console.log(`${pubKeyHex}.html: minified ${Number((minifiedBytes / preMiniByteLen) * 100).toFixed(0)}%` +
+      ` (${minifiedBytes} bytes) -> ${htmlFileBytes.length} total`);
+  }
 
   if (htmlFileBytes.length > constants.maximumContentLength) {
     console.error(`${pubKeyHex}.html: ERRRO, still too large! By ` +
@@ -33,8 +38,6 @@ async function preprocess (htmlFileBytes, pubKeyHex) {
     process.exit(-1);
   }
 
-  console.log(`${pubKeyHex}.html: minified ${Number((minifiedBytes / preMiniByteLen) * 100).toFixed(0)}%` +
-    ` (${minifiedBytes} bytes) -> ${htmlFileBytes.length} total`);
   return htmlFileBytes;
 }
 
@@ -69,8 +72,8 @@ async function putOne (host, privKeyHex, htmlFile) {
 }
 
 async function main () {
-  if (process.argv.length === 4) {
-    let [,, boardsPath, postToHostsCSV] = process.argv;
+  if (cliOpts._.length === 2) {
+    let [boardsPath, postToHostsCSV] = cliOpts._;
     postToHostsCSV = postToHostsCSV.split(',');
 
     const boardKeys = await findKnownKeys(path.resolve(boardsPath), true);
@@ -86,13 +89,14 @@ async function main () {
     process.exit(0);
   }
 
-  if (process.argv.length !== 5) {
+  if (cliOpts._.length !== 3) {
     console.log(`To put a single board: ${process.argv[1]} host privKeyHex htmlFile`);
     console.log(`To put path of boards: ${process.argv[1]} boardPath hostsCommaSeperated`);
+    console.log('\nBoards will be minified by default. Pass --no-minify to disable this.');
     process.exit(0);
   }
 
-  await putOne(...process.argv.slice(2));
+  await putOne(...cliOpts._);
 }
 
 main();

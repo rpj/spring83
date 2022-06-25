@@ -16,7 +16,8 @@
     "fastify": "^4.0.1",
     "html-minifier-terser": "^7.0.0-beta.0",
     "mustache": "^4.2.0",
-    "undici": "^5.5.1"
+    "undici": "^5.5.1",
+    "yargs": "^17.5.1"
   },
   "devDependencies": {
     "semistandard": "^16.0.1",
