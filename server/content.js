@@ -43,7 +43,7 @@ async function ttlKiller (knownKeys, contentDir, app) {
     }
   }
 
-  setTimeout(ttlKiller.bind(null, knownKeys, contentDir), constants.ttlCheckFreqMinutes * 60 * 1000);
+  setTimeout(ttlKiller.bind(null, knownKeys, contentDir, app), constants.ttlCheckFreqMinutes * 60 * 1000);
 }
 
 let pubBoards = [];
