@@ -9,18 +9,69 @@
       background-image: linear-gradient(to top, #fad0c4 0%, #ffd1ff 100%);
       padding: 10px;
     }
-    #ttl { font-style: italic; font-size: 0.7em; }
-    #m { width: 528px; }
-    #c { display: inline-flex;}
-    #b {display: none; margin-left: 30px;contain: content;width:374px; height:572px; background-color: whitesmoke; border-radius: 3%;}
-    #board {width:100%; height:100%;overflow-x: hidden;overflow-y: auto;padding: 30px;font-size: 95%;}
-    .board_link {font-family: monospace;font-size: 1.1em;}
-    .sel {text-shadow: 0 0 5px #ba8273;}
+
+    a {
+      color: #843b84;
+      text-decoration: none;
+    }
+
+    #ttl {
+      font-style: italic;
+      font-size: 0.7em;
+    }
+
+    #m {
+      width: 528px;
+    }
+
+    #c {
+      display: inline-flex;
+    }
+
+    #b {
+      display: none;
+      margin-left: 30px;
+      contain: content;
+      width: 374px;
+      height: 572px;
+      background-color: whitesmoke;
+      border-radius: 3%;
+    }
+
+    #board {
+      width: 100%;
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px;
+      font-size: 95%;
+    }
+
+    #bid {
+      width: 932px;
+      text-align: right;
+      font-family: monospace;
+      font-size: 0.8em;
+      margin-top: 5px;
+      text-shadow: 0 0 10px #843b84;
+    }
+
+    .board_link {
+      font-family: monospace;
+      font-size: 1.1em;
+    }
+
+    .sel {
+      text-shadow: 0 0 10px #bf7bbf;
+    }
     </style>
     <script src="/embed.js"></script>
     <script defer>
       document.addEventListener('DOMContentLoaded', () => {
+        const boardIdEle = document.getElementById('bid');
+
         document.getElementById('x').addEventListener('click', (e) => {
+          boardIdEle.textContent = '';
           document.getElementById('b').style.display = 'none';
           [...document.getElementsByTagName('a')].forEach((x) => x.classList.remove('sel'));
         });
@@ -28,7 +79,10 @@
         [...document.getElementsByTagName('a')].filter((x) => x.dataset.s83Key).forEach((e) =>
           e.addEventListener('click', async (ele) => {
             const { containerElement } = await embedSpringBoard(e.dataset.s83Key, 'board');
+
             containerElement.parentElement.style.display = 'inline-flex';
+            boardIdEle.textContent = e.dataset.s83Key;
+
             e.classList.add('sel');
             [...document.getElementsByTagName('a')].filter((x) => x.dataset.s83Key !== e.dataset.s83Key)
               .forEach((x) => x.classList.remove('sel'));
@@ -77,4 +131,5 @@
       <div id="board"></div>
     </div>
   </div>
+  <div id="bid"></div>
 </html>
