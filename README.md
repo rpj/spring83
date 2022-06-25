@@ -1,5 +1,7 @@
 An implementation of the [Spring 83 protocol](https://github.com/robinsloan/spring-83-spec).
 
+![A screenshot of a host running serve, showing a selected Springboard](.github/serve-ss.png)
+
 Very much a work-in-progress. This was built in reference to [`draft-20220616.md`@`0f63d3d2`](https://github.com/robinsloan/spring-83-spec/blob/0f63d3d25125106ad23428bcdaeb43b2c7840d53/draft-20220616.md).
 
 ## Setup
