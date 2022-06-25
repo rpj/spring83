@@ -23,6 +23,7 @@ This implementation is running at [https://0l0.lol](https://0l0.lol) and [https:
 | Name | Language | Instance |
 | -------------------------- | ------------------- | -------------------------|
 | [davemenninger/exspring83](https://github.com/davemenninger/exspring83) | elixir | |
+| [njbennett/elderflower](https://github.com/njbennett/elderflower) | elixir | |
 | [llimllib/springer](https://github.com/llimllib/springer) | golang | |
 | [motevets/springboard](https://github.com/motevets/springboard) | golang | https://spring83.kindrobot.ca/ |
 | [pteichman/ahoy](https://github.com/pteichman/ahoy) | golang | |
