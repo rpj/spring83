@@ -52,6 +52,13 @@ Other environment variables you should set:
 
 ### `putnew`
 
+Available on [Docker Hub as `0l0lol/putnew`](https://hub.docker.com/repository/docker/0l0lol/putnew) to
+enable usage without needing `node` locally, like so:
+
+```
+$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:1.0 ...
+```
+
 ```
 To put a single board: /home/ubuntu/spring83/putnew host privKeyHex htmlFile
 To put path of boards: /home/ubuntu/spring83/putnew boardPath hostsCommaSeperated
@@ -66,6 +73,15 @@ Operates in two modes: single board PUT or multi-board PUT.
 Puts a new board with HTML source `htmlFile` to `host` with private key (in hex) `privKeyHex`.
 
 Will insert the required `<time datetime="...">` tag, with the appropriate `datetime` value, if it doesn't exist in the document already.
+
+An example via the Docker Hub image:
+
+```
+$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:1.0 https://0l0.lol ... f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html
+f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: appended <time>, which added 84 bytes
+f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: minified 0% (0 bytes) -> 96 total
+https://0l0.lol PUT https://0l0.lol/f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623 200
+```
 
 #### Multi-board
 
@@ -85,6 +101,16 @@ $ putnew ./my-boards https://bogbody.biz,https://0l0.lol
 ```
 
 it will post both boards to both listed hosts.
+
+An example via the Docker Hub image:
+
+```
+$ docker run -it --rm -v $PWD:/home 0l0lol/putnew:1.0 ./dockerTest https://0l0.lol
+Posting 1 boards to: https://0l0.lol
+f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: appended <time>, which added 84 bytes
+f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623.html: minified 0% (0 bytes) -> 96 total
+https://0l0.lol PUT https://0l0.lol/f13571200686a9a1bae0952bf2b741e6ad4fb84082ad02cebd32fa8ea83e0623 200
+```
 
 ### `findkey`
 
