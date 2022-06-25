@@ -82,7 +82,7 @@ async function main () {
     await Promise.all(Object.entries(await findKnownKeys(path.resolve(boardsPath), true))
       .map(async ([, { body, metadata }]) => {
         const bodyPreProc = await preprocess(body, metadata.public);
-        return await Promise.all(postToHostsCSV.map(async (host) =>
+        return Promise.all(postToHostsCSV.map(async (host) =>
           await putOneBytes(host, metadata.private, bodyPreProc, metadata.public)));
       }));
 
