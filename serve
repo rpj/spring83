@@ -4,300 +4,28 @@
 
 const fs = require('fs');
 const path = require('path');
-const cheerio = require('cheerio');
-const ed = require('@noble/ed25519');
-const mustache = require('mustache');
+const routes = require('./server/routes');
 const {
   constants,
-  findKnownKeys,
-  pubKeyHexIsValid,
-  getCurrentDifficultyFactor,
-  keyIsUnderDifficultyThreshold,
-  boardExistsLocally
+  findKnownKeys
 } = require('./common');
+const {
+  ttlKiller,
+  refreshPubBoards
+} = require('./server/content');
 
 const app = require('fastify')({ logger: true });
 app.register(require('@fastify/cors'), constants.corsOptions);
 
-const expectPutHeaders = Object.freeze({
-  'content-type': constants.contentType,
-  [constants.headerNames.version]: constants.protocolVersion,
-  [constants.headerNames.signature]: async (v, context) => {
-    const sigHex = v;
-
-    if (!sigHex) {
-      return 401;
-    }
-
-    if (!(await ed.verify(sigHex, Buffer.from(context.body), context.key))) {
-      return 401;
-    }
-  },
-  'content-length': (v) => {
-    const vp = Number.parseInt(v);
-    if (!Number.isNaN(vp) && vp > constants.maximumContentLength) {
-      return 413;
-    }
-  }
-});
-
-const initialPutChecks = Object.freeze({
-  'missing body or key': (req) => !req.body || !req.params.key,
-  'invalid pub key': (req) => !pubKeyHexIsValid(req.params.key, constants.strictVerification),
-  'missing header(s)': (req) => !allExpectedHeadersExist(expectPutHeaders, req),
-  'missing required <meta> tag attribute(s)': (req) => !documentHasRequiredMeta(req)
-});
-
-function documentHasRequiredMeta (req) {
-  return Date.parse(cheerio.load(req.body)('time')?.attr()?.datetime);
-}
-
-async function validateHeader (context, [header, val]) {
-  const validator = expectPutHeaders?.[header];
-  return [header, val, await {
-    string: async () => !(val === validator),
-    function: async () => validator(val, context)
-  }?.[typeof validator]?.()];
-}
-
-function allExpectedHeadersExist (expectedMap, req) {
-  const rv = Object.keys(expectedMap).map(k => req.headers[k]);
-  if (rv.some(x => !x)) {
-    app.log.warn(`allExpectedHeadersExist failure(s): ${rv.join(', ')}`);
-  }
-  return !rv.some(x => !x);
-}
-
-function applyGenericGETReplyHeaders (reply, isRoot = false) {
-  reply.type(constants.contentType);
-  reply.header(constants.headerNames.version, constants.protocolVersion);
-
-  if (!isRoot) {
-    reply.header('Content-Security-Policy', Object.entries(constants.getKeySecurityPolicies)
-      .reduce((a, [policyValue, directivesList]) => {
-        let emitValue = policyValue;
-        if (policyValue.indexOf(':') === -1) {
-          emitValue = `'${policyValue}'`;
-        }
-        return (a += directivesList.map((directive) => `${directive} ${emitValue};`).join(' ') + ' ');
-      }, ''));
-  }
-}
-
-async function ttlKiller (knownKeys, contentDir) {
-  const expiry = new Date(Date.now() - constants.boardTTLDays * 24 * 60 * 60 * 1000);
-  app.log.info(`ttlKiller awake, expiry=${expiry}`);
-  const nonExemptEntries = Object.entries(knownKeys)
-    .filter(([k]) => !constants.ttlExceptions.includes(k));
-  for (const [key, { metadata: { ingest } }] of nonExemptEntries) {
-    const ttlCheck = Date.parse(ingest);
-    if (ttlCheck < expiry) {
-      app.log.warn(`TTL expired for ${key} ${ingest}`);
-      const pPrefix = path.join(contentDir, key);
-      await fs.promises.rm(pPrefix + '.html');
-      await fs.promises.rm(pPrefix + '.json');
-      delete knownKeys[key];
-    } else {
-      const daysTtl = Number((ttlCheck - expiry) / (1000 * 60 * 60 * 24)).toFixed(0);
-      app.log.info(`${key} (${ingest}) has ${daysTtl} days TTL`);
-      knownKeys[key].metadata.daysTtl = daysTtl;
-    }
-  }
-
-  setTimeout(ttlKiller.bind(null, knownKeys, contentDir), constants.ttlCheckFreqMinutes * 60 * 1000);
-}
-
-let pubBoards = [];
-async function refreshPubBoards (contentDir) {
-  setTimeout(refreshPubBoards.bind(null, contentDir), constants.pubBoardRefreshFreqMinutes * 60 * 1000);
-  try {
-    pubBoards = await Promise.all(JSON.parse(await fs.promises.readFile(path.join(__dirname, constants.pubBoardsJsonFileName)))
-      .map(async (key) => [key, await boardExistsLocally(contentDir, key)]));
-  } catch {}
-}
-
-async function loadClientFiles () {
-  return Object.fromEntries(await Promise.all(
-    Object.entries(constants.clientFiles).map(async ([namePfx, fileName]) =>
-      ([namePfx, (await fs.promises.readFile(path.join(__dirname, 'client', fileName))).toString('utf8')]))));
-}
-
 async function main () {
-  const { rootTmpl, notFoundTmpl, testKeyTmpl, embedJsContent, embedJSONExample } = await loadClientFiles();
   const contentDir = path.resolve(process.env.SPRING83_CONTENT_DIR || path.join(__dirname, constants.defaultContentPath));
   const fqdn = process.env.SPRING83_FQDN || constants.defaultFQDN;
   const contactAddr = process.env.SPRING83_CONTACT_ADDR;
 
   await fs.promises.mkdir(contentDir, { recursive: true });
   const knownKeys = await findKnownKeys(contentDir);
-  await ttlKiller(knownKeys, contentDir);
+  await ttlKiller(knownKeys, contentDir, app);
   await refreshPubBoards(contentDir);
-
-  app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
-
-  app.get(`/${constants.clientFiles.embedJsContent}`, (req, reply) => {
-    reply.code(200);
-    reply.type('text/javascript');
-    return embedJsContent;
-  });
-
-  app.get(`/${constants.clientFiles.embedJSONExample.replace('.tmpl', '')}`, (req, reply) => {
-    reply.code(200);
-    reply.type(constants.contentType);
-    return mustache.render(embedJSONExample, {
-      fqdn,
-      embeddedJsonExampleBoardKey: constants.embeddedJsonExampleBoardKey
-    });
-  });
-
-  app.put('/:key', async (req, reply) => {
-    if (req.params?.key === constants.testPublicKey) {
-      reply.code(401);
-      return;
-    }
-
-    if (getCurrentDifficultyFactor(knownKeys) >= 1.0) {
-      app.log.warn('getCurrentDifficultyFactor');
-      reply.code(403);
-      return;
-    }
-
-    const putCheckRes = Object.entries(initialPutChecks)
-      .find(([, checkFunc]) => checkFunc(req));
-
-    if (putCheckRes) {
-      app.log.warn(putCheckRes[0]);
-      app.log.warn('putCheckRes');
-      reply.code(400);
-      return;
-    }
-
-    const pathPrefix = path.join(contentDir, req.params.key);
-    let boardPostCode = 201;
-
-    try {
-      const { headers } = JSON.parse(await (await fs.promises.readFile(`${pathPrefix}.json`)).toString('utf8'));
-      boardPostCode = 200;
-      const metaCheck = documentHasRequiredMeta(req); // check in initialPutChecks prior, so will have a value
-
-      if (headers['if-unmodified-since'] && metaCheck <= Date.parse(headers['if-unmodified-since'])) {
-        app.log.warn('past if-unmodified-since');
-        reply.code(409);
-        return;
-      }
-
-      if (!keyIsUnderDifficultyThreshold(req.params.key, knownKeys)) {
-        app.log.warn('difficulty threshold');
-        reply.code(403);
-        return;
-      }
-    } catch (err) {
-      if (err.code !== 'ENOENT') {
-        throw err;
-      }
-    }
-
-    const validationContext = { body: req.body, key: req.params.key };
-    const firstInvalid = (await Promise.all(Object.entries(req.headers)
-      .map(validateHeader.bind(null, validationContext))))
-      .find(([,, invalid]) => Boolean(invalid));
-
-    if (firstInvalid) {
-      const [invalidName, invalidValue, validatorResult] = firstInvalid;
-
-      reply.code(400);
-      if (typeof validatorResult === 'number') {
-        reply.code(validatorResult);
-      }
-
-      app.log.warn(`bad header '${invalidName}: ${invalidValue}'`);
-      return;
-    }
-
-    const writeOpts = { mode: 0o660 };
-    const metadata = {
-      headers: req.headers,
-      ingest: new Date()
-    };
-
-    await fs.promises.writeFile(`${pathPrefix}.html`, req.body, writeOpts);
-    await fs.promises.writeFile(`${pathPrefix}.json`, JSON.stringify(metadata), writeOpts);
-
-    knownKeys[req.params.key] = {
-      body: req.body,
-      metadata
-    };
-
-    reply.code(boardPostCode);
-    app.log.info(`${{
-      200: 'Updated',
-      201: 'New'
-    }[boardPostCode]} board posted!`);
-  });
-
-  app.get('/:key', async (req, reply) => {
-    const renderMap = {};
-    const render = () => mustache.render(notFoundTmpl, renderMap);
-
-    reply.code(404);
-    applyGenericGETReplyHeaders(reply);
-
-    if (req.params.key === constants.testPublicKey) {
-      const umsDate = new Date();
-      renderMap.datetime = umsDate.toISOString().replace(/\.\d{3}Z$/, 'Z');
-      renderMap.rgb1 = { red: Math.floor(Math.random() * 255), green: Math.floor(Math.random() * 255), blue: Math.floor(Math.random() * 255) };
-      renderMap.rgb2 = { red: Math.floor(Math.random() * 255), green: Math.floor(Math.random() * 255), blue: Math.floor(Math.random() * 255) };
-      reply.code(200);
-      return mustache.render(testKeyTmpl, renderMap);
-    }
-
-    if (!pubKeyHexIsValid(req.params.key, constants.strictVerification)) {
-      app.log.warn('invalid key');
-      return render();
-    }
-
-    renderMap.key = req.params.key;
-
-    if (!knownKeys[req.params.key]) {
-      app.log.warn('invalid content');
-      return render();
-    }
-
-    const { body, metadata: { headers, ingest } } = knownKeys[req.params.key];
-    if (!body || !headers[constants.headerNames.signature]) {
-      app.log.warn('invalid content fields');
-      return;
-    }
-
-    const sig = headers[constants.headerNames.signature];
-    if (!sig) {
-      app.log.warn('invalid sig');
-      return;
-    }
-
-    reply.code(200);
-    reply.header(constants.headerNames.signature, sig);
-    reply.header('last-modified', new Date(ingest).toUTCString());
-    return body;
-  });
-
-  app.get('/', async (req, reply) => {
-    applyGenericGETReplyHeaders(reply, true);
-    reply.header(constants.headerNames.difficulty, getCurrentDifficultyFactor(knownKeys));
-    const keyMapper = (key) => ({
-      key,
-      ttl: knownKeys[key]?.metadata?.daysTtl,
-      key_display: key.slice(0, 16)
-    });
-    const renderMap = {
-      fqdn,
-      contactAddr,
-      boards: Object.keys(knownKeys).map(keyMapper),
-      pubBoards: pubBoards.filter(([, exists]) => exists === true).map(([key]) => key).sort().map(keyMapper)
-    };
-
-    return mustache.render(rootTmpl, renderMap);
-  });
 
   ['SIGINT', 'SIGTERM'].forEach((sig) => process.on(sig, () => {
     app.log.info('Stopping...');
@@ -309,6 +37,8 @@ async function main () {
     host: process.env.SPRING83_BIND_HOST || '0.0.0.0'
   };
 
+  app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
+  await routes.attach(app, knownKeys, fqdn, contentDir, contactAddr);
   await app.listen(listenSpec);
 
   app.log.info(`Found ${Object.keys(knownKeys).length} pre-existing boards in ${contentDir}`);
