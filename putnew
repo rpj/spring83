@@ -24,7 +24,7 @@ async function preprocess (htmlFileBytes, pubKeyHex) {
   }
 
   const preMiniByteLen = htmlFileBytes.length;
-  htmlFileBytes = Buffer.from(await minify(htmlFileBytes.toString('utf8'), constants.putnewMinifyOptions), 'utf8');
+  // htmlFileBytes = Buffer.from(await minify(htmlFileBytes.toString('utf8'), constants.putnewMinifyOptions), 'utf8');
   const minifiedBytes = preMiniByteLen - htmlFileBytes.length;
 
   if (htmlFileBytes.length > constants.maximumContentLength) {

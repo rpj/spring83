@@ -35,11 +35,14 @@ async function embedSpringBoard (pubkey, contEleId, options = {}) {
   if (res.ok) {
     const body = await res.text();
     const s83 = document.getElementById(contEleId);
-    if (!s83.shadowRoot) {
-      s83.attachShadow({ mode: 'open' });
-    } else {
-      while (s83.shadowRoot.firstChild) {
-        s83.shadowRoot.removeChild(s83.shadowRoot.firstChild);
+
+    if (embedMode !== 'jsonOnly') {
+      if (!s83.shadowRoot) {
+        s83.attachShadow({ mode: 'open' });
+      } else {
+        while (s83.shadowRoot.firstChild) {
+          s83.shadowRoot.removeChild(s83.shadowRoot.firstChild);
+        }
       }
     }
 
@@ -52,7 +55,7 @@ async function embedSpringBoard (pubkey, contEleId, options = {}) {
       }
 
       const embeddedJson = parseCommentsForJson(parsedDoc);
-      let upDate;
+      const upDate = new Date(Date.parse(res.headers.get('last-modified')));
 
       if (embedMode !== 'jsonOnly') {
         let targetNode = parsedDoc.firstChild;
@@ -69,7 +72,6 @@ async function embedSpringBoard (pubkey, contEleId, options = {}) {
         }
 
         s83.shadowRoot.appendChild(cont);
-        upDate = new Date(Date.parse(res.headers.get('last-modified')));
       }
 
       return {
@@ -94,7 +96,7 @@ function parseCommentsForJson (parentNode, retList = []) {
         retList.push(JSON.parse(child.textContent));
       } catch {}
     } else if (child.childNodes.length > 0) {
-      retList = retList.concat(parseCommentsForJson(child, [...retList]));
+      parseCommentsForJson(child, retList);
     }
   }
 

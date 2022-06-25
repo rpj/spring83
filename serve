@@ -87,7 +87,9 @@ function applyGenericGETReplyHeaders (reply, isRoot = false) {
 async function ttlKiller (knownKeys, contentDir) {
   const expiry = new Date(Date.now() - constants.boardTTLDays * 24 * 60 * 60 * 1000);
   app.log.info(`ttlKiller awake, expiry=${expiry}`);
-  for (const [key, { metadata: { ingest } }] of Object.entries(knownKeys)) {
+  const nonExemptEntries = Object.entries(knownKeys)
+    .filter(([k]) => !constants.ttlExceptions.includes(k));
+  for (const [key, { metadata: { ingest } }] of nonExemptEntries) {
     const ttlCheck = Date.parse(ingest);
     if (ttlCheck < expiry) {
       app.log.warn(`TTL expired for ${key} ${ingest}`);
@@ -121,7 +123,7 @@ async function loadClientFiles () {
 }
 
 async function main () {
-  const { rootTmpl, notFoundTmpl, testKeyTmpl, embedJsContent } = await loadClientFiles();
+  const { rootTmpl, notFoundTmpl, testKeyTmpl, embedJsContent, embedJSONExample } = await loadClientFiles();
   const contentDir = path.resolve(process.env.SPRING83_CONTENT_DIR || path.join(__dirname, constants.defaultContentPath));
   const fqdn = process.env.SPRING83_FQDN || constants.defaultFQDN;
   const contactAddr = process.env.SPRING83_CONTACT_ADDR;
@@ -133,10 +135,16 @@ async function main () {
 
   app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
 
-  app.get('/embed.js', (req, reply) => {
+  app.get(`/${constants.clientFiles.embedJsContent}`, (req, reply) => {
     reply.code(200);
     reply.type('text/javascript');
     return embedJsContent;
+  });
+
+  app.get(`/${constants.clientFiles.embedJSONExample.replace('.tmpl', '')}`, (req, reply) => {
+    reply.code(200);
+    reply.type(constants.contentType);
+    return mustache.render(embedJSONExample, { embeddedJsonExampleBoardKey: constants.embeddedJsonExampleBoardKey });
   });
 
   app.put('/:key', async (req, reply) => {

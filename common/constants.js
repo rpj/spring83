@@ -4,6 +4,8 @@ const headerNames = {
   version: 'spring-version'
 };
 
+const embeddedJsonExampleBoardKey = '808b9f782c590df9f0f5c8052117a4db96c079a128d871cd4cd3e73cc83e0523';
+
 module.exports = {
   constants: Object.freeze({
     maximumContentLength: 2217,
@@ -25,7 +27,8 @@ module.exports = {
       rootTmpl: 'root.tmpl.html',
       notFoundTmpl: '404.tmpl.html',
       testKeyTmpl: 'testkey.tmpl.html',
-      embedJsContent: 'embed.js'
+      embedJsContent: 'embed.js',
+      embedJSONExample: 'embedded-json-example.tmpl.html'
     },
     defaultContentPath: '.content',
     defaultFQDN: 'example.com',
@@ -48,6 +51,10 @@ module.exports = {
       collapseWhitespace: true,
       minifyCSS: true,
       conservativeCollapse: true
-    }
+    },
+    embeddedJsonExampleBoardKey,
+    ttlExceptions: [
+      embeddedJsonExampleBoardKey
+    ]
   })
 };

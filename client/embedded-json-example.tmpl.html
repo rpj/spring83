@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body {
+        background-color: azure;
+        margin: 30px;
+      }
+
+      #boardContainer {
+        padding: 20px;
+        border: 2px solid midnightblue;
+        border-radius: 3%;
+        width: 372px;
+        background-color: antiquewhite;
+      }
+
+      #boardJson {
+        color: rgb(106, 253, 87);
+        background-color: #111; 
+        font: monospace; 
+        width: 372px;
+        text-shadow: 0 0 5px #C8C8C8;
+        padding: 20px;
+        border-radius: 3%;
+      }
+    </style>
+  </head>
+
+  <script src="/embed.js"></script>
+
+  <script defer>
+    const testBoardPubKey = '{{ embeddedJsonExampleBoardKey }}';
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { upDate, embeddedJson } = await embedSpringBoard(testBoardPubKey, 'boardContainer');
+      document.getElementById('boardLastUpdated').textContent = upDate.toLocaleString();
+      document.getElementById('boardJson').textContent = JSON.stringify(embeddedJson, null, 2);
+    });
+  </script>
+
+  <body>
+    <h1>Springboard embedding <i>with</i> embedded JSON</h1>
+
+    <p>The embedded board is: <a href="/{{ embeddedJsonExampleBoardKey }}">/{{ embeddedJsonExampleBoardKey }}</a>.</p>
+
+    <h3>JSON:</h3>
+    <pre id="boardJson"></pre>
+
+    <h3>Springboard:</h3>
+    <div id="boardContainer"></div>
+    
+    <h3><code>Last-Modified</code>:</h3>
+    <div id="boardLastUpdated"></div>
+
+    <br/>
+    <hr/>
+    
+    <p>The source of this file is:
+      <code><a href="https://github.com/rpj/spring83/tree/main/client/embedded-json-example.tmpl.html" target="_blank">embedded-json-example.tmpl.html</a></code>.</p>
+  </body>
+</html>
