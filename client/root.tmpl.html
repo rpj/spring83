@@ -31,11 +31,12 @@
     #b {
       display: none;
       margin-left: 30px;
+      margin-top: 30px;
       contain: content;
       width: 374px;
       height: 572px;
       background-color: whitesmoke;
-      border-radius: 3%;
+      border-radius: 10px;
     }
 
     #board {
@@ -54,6 +55,8 @@
       font-size: 0.8em;
       margin-top: 5px;
       text-shadow: 0 0 10px #843b84;
+      position: absolute;
+      top: 30px;
     }
 
     .board_link {
@@ -92,10 +95,11 @@
     </script>
   </head>
   <body>
+    <div id="bid"></div>
     <div id="c">
       <div id="m">
         <h1>🌸 A <a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring '83</a> server.</h1>
-        <h2 style="text-align: center;">Boards are best viewed with<br/>the <a href="https://followersentinel.com/" target="_blank">FollowerSentinel</a>.</h2>
+        <h2 style="text-align: center;">Boards are best viewed at<br/>the <a href="https://followersentinel.com/" target="_blank">FollowerSentinel</a>.</h2>
         {{ #pubBoards.length }}
           <h3>Publicly-listed boards <span id="ttl">(time-to-live)</i>:</h3>
           <div>
@@ -123,6 +127,8 @@
           publishing tool</a> for the CLI.
         </p>
         <p>
+          {{ fqdn }} provides a <a href="/embed.js" target="_blank">utility API</a> (CORS-OK) for embedding
+          Springboards from any host into other documents, including the ability to <a href="/embedded-json-example.html">extract valid JSON within boards</a>.
         </p>
       </body>
     </div>
@@ -131,5 +137,4 @@
       <div id="board"></div>
     </div>
   </div>
-  <div id="bid"></div>
 </html>

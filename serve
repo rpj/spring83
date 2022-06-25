@@ -144,7 +144,10 @@ async function main () {
   app.get(`/${constants.clientFiles.embedJSONExample.replace('.tmpl', '')}`, (req, reply) => {
     reply.code(200);
     reply.type(constants.contentType);
-    return mustache.render(embedJSONExample, { embeddedJsonExampleBoardKey: constants.embeddedJsonExampleBoardKey });
+    return mustache.render(embedJSONExample, {
+      fqdn,
+      embeddedJsonExampleBoardKey: constants.embeddedJsonExampleBoardKey
+    });
   });
 
   app.put('/:key', async (req, reply) => {
