@@ -21,8 +21,8 @@ const embedKindrobotBoard = embedBoardForcedHost.bind(null, 'https://spring83.ki
           `intContTagType`: the internal container element type to be created
           `springHost`: the host to fetch the board from, defaults to window.location.origin
           `embedMode`: if set to 'jsonOnly', will not embed the board's HTML into the outer document's
-            DOM, and will instead just call doneCb with any parsed JSON found.
-  @returns `Promise<object>` where object has properties:
+            DOM, and will instead just return any parsed JSON found.
+  @returns `Promise<object>` where object is undefined on failure and on success has the properties:
           * `containerElement`: the HTMLElement representing `contEleId`
           * `upDate`: the last-modified Date
           * `embeddedJson`: if any embedded JSON was found in comments and parsed successfully,
