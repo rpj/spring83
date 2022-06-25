@@ -35,7 +35,7 @@ This implementation is running at [https://0l0.lol](https://0l0.lol) and [https:
 
 ### `serve`
 
-Runs a Spring-83 server on port specified by environment variable `SPRING83_BIND_PORT` (or `1783` by default) & binding to `SPRING83_BIND_HOST` (or `0.0.0.0` by default).
+Runs a Spring-83 server on port specified by environment variable `SPRING83_BIND_PORT` (or `1783` by default) & binding to `SPRING83_BIND_HOST` (or `localhost` by default).
 
 Writes boards into `SPRING83_CONTENT_DIR` (or `./.content` by default).
 
@@ -47,15 +47,25 @@ Other environment variables you should set:
   * `SPRING83_FQDN`: your fully-qualified domain name (no protocol scheme, e.g. `0l0.lol`)
   * `SPRING83_CONTACT_ADDR`: a contact email address for your site
 
+#### POST endpoint
+
+This server implements an extension to the (current) protocol: `POST /key`.
+
+Accepting exactly the same body & header set as `PUT /key` (plus an additional optional header, detailed below), this endpoint will minify the board & auto-shorten any HTTP(S) links it finds, returning the resulting document to be re-signed and `PUT` normally by the user in possesion of the private key matching `key`. It does not modify anything server-side, only transforming and returning the original request body.
+
+Either (or both, though what's the point of that) behaviors can be disabled via the `Spring-Shortener-Disable` header, a comma-separated list of behavior to disable. The values for these are: `shorten-links`, and `minify`. Additionally, the value `shorten-board-links` can be included to disable shortening links to other Springboards, ensuring they can render inline as expected in clients such as [the Follower Sentinel](https://followersentinel.com/).
+
 ## Tools
 
 ### `putnew`
 
 ```
-To put a single board: /home/ubuntu/spring83/putnew host privKeyHex htmlFile
-To put path of boards: /home/ubuntu/spring83/putnew boardPath hostsCommaSeperated
+To put a single board:    putnew host privKeyHex htmlFile
+To put a path of boards:  putnew boardPath hostsCommaSeperated
 
-Boards will be minified by default. Pass --no-minify to disable this.
+Boards will be minified & have HTTP(S) links shortened by default (except Springboard links).
+Pass --no-minify and/or --no-shorten to disable these behaviors.
+To also shorten Springboard links, pass --shortenBoardLinks true
 ```
 
 Available on [Docker Hub as `0l0lol/putnew`](https://hub.docker.com/r/0l0lol/putnew/tags) to

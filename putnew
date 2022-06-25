@@ -7,13 +7,22 @@ const path = require('path');
 const cheerio = require('cheerio');
 const { fetch } = require('undici');
 const ed = require('@noble/ed25519');
-const { minify } = require('html-minifier-terser');
-const { constants, findKnownKeys } = require('./common');
+const { constants, findKnownKeys, minify } = require('./common');
 
-const cliOpts = require('yargs/yargs')(process.argv.slice(2)).default({ minify: true }).parse();
+const cliOpts = require('yargs/yargs')(process.argv.slice(2))
+  .default({
+    shorten: true,
+    shortenBoardLinks: false,
+    minify: true,
+    postHost: 'https://0l0.lol'
+  })
+  .parse();
 const umsDate = new Date();
 
-async function preprocess (htmlFileBytes, pubKeyHex) {
+const putOneBytes = xOneBytes.bind(null, 'PUT');
+const postOneBytes = xOneBytes.bind(null, 'POST', cliOpts.postHost);
+
+async function preprocess (privKeyHex, htmlFileBytes, pubKeyHex) {
   const htmlParsed = cheerio.load(htmlFileBytes);
 
   // append required <time> tag if not already present
@@ -24,13 +33,31 @@ async function preprocess (htmlFileBytes, pubKeyHex) {
     console.log(`${pubKeyHex}.html: appended <time>, which added ${htmlFileBytes.length - ogByteLen} bytes`);
   }
 
-  if (cliOpts.minify) {
-    const preMiniByteLen = htmlFileBytes.length;
-    htmlFileBytes = Buffer.from(await minify(htmlFileBytes.toString('utf8'), constants.putnewMinifyOptions), 'utf8');
-    const minifiedBytes = preMiniByteLen - htmlFileBytes.length;
-    console.log(`${pubKeyHex}.html: minified ${Number((minifiedBytes / preMiniByteLen) * 100).toFixed(0)}%` +
-      ` (${minifiedBytes} bytes) -> ${htmlFileBytes.length} total`);
+  const preMiniByteLen = htmlFileBytes.length;
+  if (cliOpts.shorten) {
+    const extraHeaders = {};
+    const disabled = [];
+
+    if (!cliOpts.minify) {
+      disabled.push('minify');
+    }
+
+    if (!cliOpts.shortenBoardLinks) {
+      disabled.push('shorten-board-links');
+    }
+
+    if (disabled.length) {
+      extraHeaders[constants.headerNames.shortenerDisable] = disabled.join(',');
+    }
+
+    htmlFileBytes = Buffer.from(await postOneBytes(privKeyHex, htmlFileBytes, pubKeyHex, extraHeaders), 'utf8');
+  } else if (cliOpts.minify) {
+    htmlFileBytes = await minify(htmlFileBytes);
   }
+
+  const minifiedBytes = preMiniByteLen - htmlFileBytes.length;
+  console.log(`${pubKeyHex}.html: minified ${Number((minifiedBytes / preMiniByteLen) * 100).toFixed(0)}%` +
+    ` (${minifiedBytes} bytes) -> ${htmlFileBytes.length} total`);
 
   if (htmlFileBytes.length > constants.maximumContentLength) {
     console.error(`${pubKeyHex}.html: ERRRO, still too large! By ` +
@@ -41,33 +68,37 @@ async function preprocess (htmlFileBytes, pubKeyHex) {
   return htmlFileBytes;
 }
 
-// expects htmlFileBytes is preprocessed
-async function putOneBytes (host, privKeyHex, htmlFileBytes, pubKeyHex) {
+async function xOneBytes (method, host, privKeyHex, htmlFileBytes, pubKeyHex, extraHeaders = {}) {
   const unmodifiedSince = umsDate.toUTCString();
   const sigBytes = await ed.sign(htmlFileBytes, privKeyHex);
   const sigHex = Buffer.from(sigBytes).toString('hex');
   const fetchUri = `${host}/${pubKeyHex}`;
   const fetchRes = await fetch(fetchUri, {
-    method: 'PUT',
+    method,
     headers: {
       'content-type': constants.contentType,
       [constants.headerNames.version]: constants.protocolVersion,
       'if-unmodified-since': unmodifiedSince,
-      [constants.headerNames.signature]: sigHex
+      [constants.headerNames.signature]: sigHex,
+      ...extraHeaders
     },
     body: htmlFileBytes
   });
 
   if (!fetchRes.ok) {
-    console.error(`ERROR: ${host} ${fetchRes.status} "${fetchRes.statusText}"`);
+    console.error(`ERROR: ${method} ${host} ${fetchRes.status} "${fetchRes.statusText}"`);
   } else {
-    console.log(`${host} PUT ${fetchUri} ${fetchRes.status}`);
+    const isPost = method === 'POST';
+    console.log(`${method} ${host} ${fetchRes.status} ` + (isPost ? '' : `-> ${fetchUri}`));
+    if (isPost) {
+      return fetchRes.text();
+    }
   }
 }
 
 async function putOne (host, privKeyHex, htmlFile) {
   const pubKeyHex = Buffer.from(await ed.getPublicKey(privKeyHex)).toString('hex');
-  const htmlFileBytes = await preprocess(fs.readFileSync(htmlFile), pubKeyHex);
+  const htmlFileBytes = await preprocess(privKeyHex, fs.readFileSync(htmlFile), pubKeyHex);
   return putOneBytes(host, privKeyHex, htmlFileBytes, pubKeyHex);
 }
 
@@ -81,7 +112,7 @@ async function main () {
 
     await Promise.all(Object.entries(await findKnownKeys(path.resolve(boardsPath), true))
       .map(async ([, { body, metadata }]) => {
-        const bodyPreProc = await preprocess(body, metadata.public);
+        const bodyPreProc = await preprocess(metadata.private, body, metadata.public);
         return Promise.all(postToHostsCSV.map(async (host) =>
           await putOneBytes(host, metadata.private, bodyPreProc, metadata.public)));
       }));
@@ -90,9 +121,12 @@ async function main () {
   }
 
   if (cliOpts._.length !== 3) {
-    console.log(`To put a single board: ${process.argv[1]} host privKeyHex htmlFile`);
-    console.log(`To put path of boards: ${process.argv[1]} boardPath hostsCommaSeperated`);
-    console.log('\nBoards will be minified by default. Pass --no-minify to disable this.');
+    const execName = path.parse(process.argv[1]).name;
+    console.log(`To put a single board:    ${execName} host privKeyHex htmlFile`);
+    console.log(`To put a path of boards:  ${execName} boardPath hostsCommaSeperated`);
+    console.log('\nBoards will be minified & have HTTP(S) links shortened by default (except Springboard links).');
+    console.log('Pass --no-minify and/or --no-shorten to disable these behaviors.');
+    console.log('To also shorten Springboard links, pass --shortenBoardLinks true');
     process.exit(0);
   }
 

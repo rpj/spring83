@@ -2,9 +2,11 @@
 
 const fs = require('fs');
 const path = require('path');
+const cheerio = require('cheerio');
 const mustache = require('mustache');
 const {
   constants,
+  minify,
   pubKeyHexIsValid,
   getCurrentDifficultyFactor,
   keyIsUnderDifficultyThreshold
@@ -20,8 +22,9 @@ const {
   applyGenericGETReplyHeaders
 } = require('./content');
 
-async function attach (app, knownKeys, fqdn, contentDir, contactAddr) {
+async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
   const { rootTmpl, notFoundTmpl, testKeyTmpl, embedJsContent, embedJSONExample } = await loadClientFiles();
+  const shortener = await require('./shortener').init(contentDir, app);
 
   app.get(`/${constants.clientFiles.embedJsContent}`, (req, reply) => {
     reply.code(200);
@@ -38,7 +41,7 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr) {
     });
   });
 
-  app.put('/:key', async (req, reply) => {
+  const postPutHandlerValidator = async function (validCallback, req, reply) {
     if (req.params?.key === constants.testPublicKey) {
       reply.code(401);
       return;
@@ -69,13 +72,13 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr) {
       const metaCheck = documentHasRequiredMeta(req); // check in initialPutChecks prior, so will have a value
 
       if (headers['if-unmodified-since'] && metaCheck <= Date.parse(headers['if-unmodified-since'])) {
-        app.log.warn('past if-unmodified-since');
+        app.log.warn('Past if-unmodified-since');
         reply.code(409);
         return;
       }
 
       if (!keyIsUnderDifficultyThreshold(req.params.key, knownKeys)) {
-        app.log.warn('difficulty threshold');
+        app.log.warn('Difficulty threshold');
         reply.code(403);
         return;
       }
@@ -93,15 +96,89 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr) {
     if (firstInvalid) {
       const [invalidName, invalidValue, validatorResult] = firstInvalid;
 
-      reply.code(400);
-      if (typeof validatorResult === 'number') {
-        reply.code(validatorResult);
-      }
+      // the content-length restriction is the *only* one not enforced for 'POST',
+      // for obvious reasons (it's job is to reduce the board's size!)
+      if (!(validatorResult === 413 && req.method === 'POST')) {
+        reply.code(400);
+        if (typeof validatorResult === 'number') {
+          reply.code(validatorResult);
+        }
 
-      app.log.warn(`bad header '${invalidName}: ${invalidValue}'`);
-      return;
+        app.log.warn(`Bad header '${invalidName}: ${invalidValue}'`);
+        return;
+      }
     }
 
+    return validCallback(req, reply, pathPrefix, boardPostCode);
+  };
+
+  if (constants.shortener.enabled) {
+    app.post('/:key', postPutHandlerValidator.bind(null, async (req, reply) => {
+      let { body } = req;
+      const parsed = cheerio.load(body);
+      const disabled = req.headers[constants.headerNames.shortenerDisable]?.split(/,\s+/) || [];
+
+      if (!disabled.includes('shorten-links')) {
+        const ignoreBoardLinks = disabled.includes('shorten-board-links');
+        const promises = [];
+        parsed('a').each((idx, ele) => {
+          if (ele.attribs.href.startsWith('http')) {
+            promises.push(async () => {
+              const { host, pathname } = new URL(ele.attribs.href);
+              if (constants.shortener.knownS83Hosts.includes(host) && pathname.indexOf('/') === 0) {
+                const pnSlice = pathname.slice(1);
+                // don't shorten board links, if option was specified
+                if (ignoreBoardLinks && pnSlice.length === 64 && pnSlice.match(constants.keyMatchRegex)) {
+                  return [null, {}];
+                }
+
+                // don't try to shorten shortlinks!
+                if (host === fqdn) {
+                  const resolved = await shortener.resolve(pathname.slice(1));
+                  if (resolved !== null) {
+                    return [null, {}];
+                  }
+                }
+              }
+
+              return [ele, (await shortener.shorten(ele.attribs.href))];
+            });
+          }
+        });
+
+        (await Promise.all(promises.map(x => x()))).forEach(([ele, { shortId, isNew }]) => {
+          if (ele === null) {
+            return; // was a shortlink, not going to reshorten
+          }
+
+          const shortUrl = `${scheme}://${fqdn}/${shortId}`;
+
+          if (shortUrl.length > ele.attribs.href.length) {
+            if (isNew) {
+              app.log.info(`Shortened (${shortUrl}) is longer than original (${ele.attribs.href})! skipping`);
+            }
+            return;
+          }
+
+          if (isNew) {
+            app.log.info(`New shortening: ${ele.attribs.href} (${ele.attribs.href.length}) -> ${shortUrl} (${shortUrl.length})`);
+          }
+
+          ele.attribs.href = shortUrl;
+        });
+
+        body = parsed.root().html();
+      }
+
+      if (!disabled.includes('minify')) {
+        body = await minify(Buffer.from(body, 'utf8'));
+      }
+
+      return body;
+    }));
+  }
+
+  app.put('/:key', postPutHandlerValidator.bind(null, async (req, reply, pathPrefix, boardPostCode) => {
     const writeOpts = { mode: 0o660 };
     const metadata = {
       headers: req.headers,
@@ -121,9 +198,9 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr) {
       200: 'Updated',
       201: 'New'
     }[boardPostCode]} board posted!`);
-  });
+  }));
 
-  app.get('/:key', async (req, reply) => {
+  const getBoard = async function (req, reply) {
     const renderMap = {};
     const render = () => mustache.render(notFoundTmpl, renderMap);
 
@@ -167,6 +244,20 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr) {
     reply.header(constants.headerNames.signature, sig);
     reply.header('last-modified', new Date(ingest).toUTCString());
     return body;
+  };
+
+  app.get('/:key', async (req, reply) => {
+    if (req.params.key?.length === 64) {
+      return getBoard(req, reply);
+    } else if (constants.shortener.enabled) {
+      const resolved = await shortener.resolve(req.params.key);
+      if (resolved) {
+        reply.redirect(resolved);
+        return;
+      }
+    }
+
+    reply.code(404);
   });
 
   app.get('/', async (req, reply) => {

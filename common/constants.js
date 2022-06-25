@@ -1,7 +1,8 @@
 const headerNames = {
   difficulty: 'spring-difficulty',
   signature: 'spring-signature',
-  version: 'spring-version'
+  version: 'spring-version',
+  shortenerDisable: 'spring-shortener-disable'
 };
 
 const embeddedJsonExampleBoardKey = '808b9f782c590df9f0f5c8052117a4db96c079a128d871cd4cd3e73cc83e0523';
@@ -55,6 +56,12 @@ module.exports = {
     embeddedJsonExampleBoardKey,
     ttlExceptions: [
       embeddedJsonExampleBoardKey
-    ]
+    ],
+    shortener: {
+      enabled: true,
+      dbFileName: 'shortener.sqlite3',
+      idSize: 4,
+      knownS83Hosts: ['bogbody.biz', '0l0.lol', 'spring83.kindrobot.ca', 'spring83.rkas.net', 'spring83.mozz.us']
+    }
   })
 };

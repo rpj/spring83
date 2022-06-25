@@ -17,10 +17,14 @@ const {
 const app = require('fastify')({ logger: true });
 app.register(require('@fastify/cors'), constants.corsOptions);
 
+const DefaultScheme = 'https';
+const DefaultHost = 'localhost';
+const DefaultPort = 1783;
+
 async function main () {
   const contentDir = path.resolve(process.env.SPRING83_CONTENT_DIR || path.join(__dirname, constants.defaultContentPath));
-  const fqdn = process.env.SPRING83_FQDN || constants.defaultFQDN;
   const contactAddr = process.env.SPRING83_CONTACT_ADDR;
+  let fqdn = process.env.SPRING83_FQDN || constants.defaultFQDN;
 
   await fs.promises.mkdir(contentDir, { recursive: true });
   const knownKeys = await findKnownKeys(contentDir);
@@ -33,12 +37,18 @@ async function main () {
   }));
 
   const listenSpec = {
-    port: process.env.SPRING83_BIND_PORT || 1783,
-    host: process.env.SPRING83_BIND_HOST || '0.0.0.0'
+    port: process.env.SPRING83_BIND_PORT || DefaultPort,
+    host: process.env.SPRING83_BIND_HOST || DefaultHost
   };
 
+  let scheme = DefaultScheme;
+  if (fqdn === constants.defaultFQDN && listenSpec.host === DefaultHost && listenSpec.port === DefaultPort) {
+    fqdn = `${listenSpec.host}:${listenSpec.port}`;
+    scheme = 'http';
+  }
+
   app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
-  await routes.attach(app, knownKeys, fqdn, contentDir, contactAddr);
+  await routes.attach(app, knownKeys, fqdn, contentDir, contactAddr, scheme);
   await app.listen(listenSpec);
 
   app.log.info(`Found ${Object.keys(knownKeys).length} pre-existing boards in ${contentDir}`);

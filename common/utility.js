@@ -3,6 +3,11 @@
 const fs = require('fs');
 const path = require('path');
 const { constants } = require('./constants');
+const minifier = require('html-minifier-terser');
+
+async function minify (htmlFileBytes) {
+  return Buffer.from(await minifier.minify(htmlFileBytes.toString('utf8'), constants.putnewMinifyOptions), 'utf8');
+}
 
 function keyPairFilename (publicKey, root = __dirname) {
   if (typeof publicKey !== 'string') {
@@ -111,5 +116,6 @@ module.exports = {
   keyPairFilename,
   readKeypairFile,
   boardExistsLocally,
-  findKeypairFile
+  findKeypairFile,
+  minify
 };
