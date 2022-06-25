@@ -39,7 +39,10 @@ Runs a Spring-83 server on port specified by environment variable `SPRING83_BIND
 
 Writes boards into `SPRING83_CONTENT_DIR` (or `./.content` by default).
 
-If Docker is available, can be run simply with `docker compose up --build -d`: `SPRING83_CONTENT_DIR_HOST` must be specified to be the host-side path for which `SPRING83_CONTENT_DIR` will map to internally.
+If Docker is available, an [image is published to Docker Hub](https://hub.docker.com/repository/docker/0l0lol/serve) you may use or `serve`
+can be run from this repo with `docker compose up --build -d`.
+
+`SPRING83_CONTENT_DIR_HOST` must be specified to be the host-side path for which `SPRING83_CONTENT_DIR` will map to internally.
 
 Other environment variables you should set:
   * `SPRING83_FQDN`: your fully-qualified domain name (no protocol scheme, e.g. `0l0.lol`)
