@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const cheerio = require('cheerio');
 const mustache = require('mustache');
+const federate = require('./federate');
 const {
   constants,
   minify,
@@ -193,10 +194,21 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
       metadata
     };
 
+    const didFederate = await federate.add(req);
+    if (!didFederate && req.headers.via) {
+      boardPostCode = 203;
+    }
+
+    if (didFederate) {
+      reply.header(constants.headerNames.federatedTo, constants.federate.knownS83Hosts
+        .filter((h) => h !== fqdn).join(','));
+    }
+
     reply.code(boardPostCode);
     app.log.info(`${{
       200: 'Updated',
-      201: 'New'
+      201: 'New',
+      203: 'Federated'
     }[boardPostCode]} board posted!`);
   }));
 
@@ -263,16 +275,19 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
   app.get('/', async (req, reply) => {
     applyGenericGETReplyHeaders(reply, true);
     reply.header(constants.headerNames.difficulty, getCurrentDifficultyFactor(knownKeys));
+
     const keyMapper = (key) => ({
       key,
       ttl: knownKeys[key]?.metadata?.daysTtl,
       key_display: key.slice(0, 16)
     });
+
     const renderMap = {
       fqdn,
       contactAddr,
       boards: Object.keys(knownKeys).map(keyMapper),
-      pubBoards: getPublicBoards().filter(([, exists]) => exists === true).map(([key]) => key).sort().map(keyMapper)
+      pubBoards: getPublicBoards().filter(([, exists]) => exists === true).map(([key]) => key).sort().map(keyMapper),
+      federated: constants.federate.knownS83Hosts.filter((x) => x !== fqdn).map((x) => ({ host: x }))
     };
 
     return mustache.render(rootTmpl, renderMap);

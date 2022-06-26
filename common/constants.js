@@ -2,7 +2,8 @@ const headerNames = {
   difficulty: 'spring-difficulty',
   signature: 'spring-signature',
   version: 'spring-version',
-  shortenerDisable: 'spring-shortener-disable'
+  shortenerDisable: 'spring-shortener-disable',
+  federatedTo: 'spring-federated-to'
 };
 
 const embeddedJsonExampleBoardKey = '808b9f782c590df9f0f5c8052117a4db96c079a128d871cd4cd3e73cc83e0523';
@@ -62,6 +63,12 @@ module.exports = {
       dbFileName: 'shortener.sqlite3',
       idSize: 4,
       knownS83Hosts: ['bogbody.biz', '0l0.lol', 'spring83.kindrobot.ca', 'spring83.rkas.net', 'spring83.mozz.us']
+    },
+    federate: {
+      rateLimitMs: 10,
+      // make sure your FQDN matches one of these or you'll federate to yourself!
+      knownS83Hosts: ['lol.0l0.lol', '0l0.lol', 'spring83.kindrobot.ca'],
+      ignorableStatus: [409, 502]
     }
   })
 };

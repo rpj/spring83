@@ -39,6 +39,24 @@ Writes boards into `SPRING83_CONTENT_DIR` (or `./.content` by default).
 
 If Docker is available, an image is published to Docker Hub [as <code>0l0lol/serve</code>](https://hub.docker.com/r/0l0lol/serve) or `serve` can be run from this repo directly: `docker compose up --build -d serve`.
 
+#### Server federation
+
+This implementation supports an early and limited form of server federation per the discussion
+on [Issue #6](https://github.com/rpj/spring83/issues/6).
+
+Federation will not work correctly on your instance unless you have:
+* specified `SPRING83_FQDN` correctly for your setup and
+* added that FQDN to [`constants.federate.knownS83Hosts`](https://github.com/rpj/spring83/blob/main/common/constants.js#L69)
+
+Any incoming `PUT` request with either:
+* a `Via` header
+* a `<meta name="spring:share" content="false">` tag in the body
+
+will **NOT** be queued for federation.
+
+The response to a successful `PUT` request that _lacks_ one of the above will include the `spring-federated-to` header, the value of which is a comma-separated list of external hosts
+that the board has been _queued_ to be shared with.
+
 #### POST endpoint
 
 This server implements an extension to the (current) protocol: `POST /key`.
@@ -85,6 +103,9 @@ To put a path of boards:  putnew boardPath hostsCommaSeperated
 Boards will be minified & have HTTP(S) links shortened by default (except Springboard links).
 Pass --no-minify and/or --no-shorten to disable these behaviors.
 To also shorten Springboard links, pass --shortenBoardLinks true
+
+To mark your board to NOT be shared with other federated servers, pass --doNotShare true
+        This adds at least 42 bytes.
 ```
 
 Available on [Docker Hub as `0l0lol/putnew`](https://hub.docker.com/r/0l0lol/putnew/tags) to

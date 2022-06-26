@@ -2,8 +2,28 @@
 
 const fs = require('fs');
 const path = require('path');
+const { fetch } = require('undici');
 const { constants } = require('./constants');
 const minifier = require('html-minifier-terser');
+
+async function s83Request (method, host, pubKeyHex, unmodifiedSince, sigHex, extraHeaders, htmlFileBytes) {
+  const reqObj = {
+    method,
+    headers: {
+      'content-type': constants.contentType,
+      [constants.headerNames.version]: constants.protocolVersion,
+      'if-unmodified-since': unmodifiedSince,
+      [constants.headerNames.signature]: sigHex,
+      ...extraHeaders
+    }
+  };
+
+  if (htmlFileBytes?.length > 0) {
+    reqObj.body = htmlFileBytes;
+  }
+
+  return fetch(`${host}/${pubKeyHex}`, reqObj);
+}
 
 async function minify (htmlFileBytes) {
   return Buffer.from(await minifier.minify(htmlFileBytes.toString('utf8'), constants.putnewMinifyOptions), 'utf8');
@@ -117,5 +137,6 @@ module.exports = {
   readKeypairFile,
   boardExistsLocally,
   findKeypairFile,
-  minify
+  minify,
+  s83Request
 };

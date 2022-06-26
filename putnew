@@ -5,16 +5,16 @@
 const fs = require('fs');
 const path = require('path');
 const cheerio = require('cheerio');
-const { fetch } = require('undici');
 const ed = require('@noble/ed25519');
-const { constants, findKnownKeys, minify } = require('./common');
+const { constants, findKnownKeys, minify, s83Request } = require('./common');
 
 const cliOpts = require('yargs/yargs')(process.argv.slice(2))
   .default({
     shorten: true,
     shortenBoardLinks: false,
     minify: true,
-    postHost: 'https://0l0.lol'
+    postHost: 'https://0l0.lol',
+    doNotShare: false
   })
   .parse();
 const umsDate = new Date();
@@ -24,14 +24,24 @@ const postOneBytes = xOneBytes.bind(null, 'POST', cliOpts.postHost);
 
 async function preprocess (privKeyHex, htmlFileBytes, pubKeyHex) {
   const htmlParsed = cheerio.load(htmlFileBytes);
+  const ogByteLen = htmlFileBytes.length;
+
+  const append = (s) => {
+    htmlParsed('html').append(s);
+    htmlFileBytes = Buffer.from(htmlParsed.root().html(), 'utf8');
+  };
 
   // append required <time> tag if not already present
   if (htmlParsed('time').length === 0) {
-    const ogByteLen = htmlFileBytes.length;
-    htmlParsed('html').append(`<time datetime="${umsDate.toISOString().replace(/\.\d{3}Z$/, 'Z')}">`);
-    htmlFileBytes = Buffer.from(htmlParsed.root().html(), 'utf8');
-    console.log(`${pubKeyHex}.html: appended <time>, which added ${htmlFileBytes.length - ogByteLen} bytes`);
+    append(`<time datetime="${umsDate.toISOString().replace(/\.\d{3}Z$/, 'Z')}">`);
   }
+
+  // append do-not-share meta tag if not present
+  if (cliOpts.doNotShare && htmlParsed('meta[name=spring:share]').length === 0) {
+    append('<meta name="spring:share" content="false">');
+  }
+
+  console.log(`${pubKeyHex}.html: appended tags added ${htmlFileBytes.length - ogByteLen} bytes`);
 
   const preMiniByteLen = htmlFileBytes.length;
   if (cliOpts.shorten) {
@@ -72,26 +82,20 @@ async function xOneBytes (method, host, privKeyHex, htmlFileBytes, pubKeyHex, ex
   const unmodifiedSince = umsDate.toUTCString();
   const sigBytes = await ed.sign(htmlFileBytes, privKeyHex);
   const sigHex = Buffer.from(sigBytes).toString('hex');
-  const fetchUri = `${host}/${pubKeyHex}`;
-  const fetchRes = await fetch(fetchUri, {
-    method,
-    headers: {
-      'content-type': constants.contentType,
-      [constants.headerNames.version]: constants.protocolVersion,
-      'if-unmodified-since': unmodifiedSince,
-      [constants.headerNames.signature]: sigHex,
-      ...extraHeaders
-    },
-    body: htmlFileBytes
-  });
+  const fetchRes = await s83Request(method, host, pubKeyHex, unmodifiedSince, sigHex, extraHeaders, htmlFileBytes);
 
   if (!fetchRes.ok) {
     console.error(`ERROR: ${method} ${host} ${fetchRes.status} "${fetchRes.statusText}"`);
   } else {
     const isPost = method === 'POST';
-    console.log(`${method} ${host} ${fetchRes.status} ` + (isPost ? '' : `-> ${fetchUri}`));
+    console.log(`${method} ${host} ${fetchRes.status} ` + (isPost ? '' : `-> ${host}/${pubKeyHex}`));
     if (isPost) {
       return fetchRes.text();
+    }
+
+    const fedTo = fetchRes.headers.get(constants.headerNames.federatedTo);
+    if (fedTo) {
+      console.log(`Board will also be shared with: ${fedTo}`);
     }
   }
 }
@@ -127,6 +131,8 @@ async function main () {
     console.log('\nBoards will be minified & have HTTP(S) links shortened by default (except Springboard links).');
     console.log('Pass --no-minify and/or --no-shorten to disable these behaviors.');
     console.log('To also shorten Springboard links, pass --shortenBoardLinks true');
+    console.log('\nTo mark your board to NOT be shared with other federated servers, pass --doNotShare true');
+    console.log('\tThis adds at least 42 bytes.');
     process.exit(0);
   }
 

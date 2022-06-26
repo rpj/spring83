@@ -6,7 +6,7 @@
     <style type="text/css">
     html {
       height: 100%;
-      background-image: linear-gradient(to top, #fad0c4 0%, #ffd1ff 100%);
+      background-color: #fad0c4;
       padding: 10px;
     }
 
@@ -114,6 +114,17 @@
           </div>
         {{ /pubBoards.length }}
         <p>Want to be included here? <a href="mailto:include-me-{{ contactAddr }}">Drop a line</a> with your public key (in hex!) as the subject line.</p>
+        {{ #federated.length }}
+        <p>
+          This host is federated with:
+          <ul>
+            {{ #federated }}
+            <li><a href="https://{{ host }}" target="_blank">{{ host }}</a></li>
+            {{ /federated }}
+          </ul>
+          <a href="https://github.com/rpj/spring83/blob/main/README.md#server-federation" target="_blank">Read here</a> how to disable sharing of boards with these hosts.
+        </p>
+        {{ /federated.length }}
         <p>
           Illegal, abusive, discriminatory, hateful, or unethical content is not allowed.
           The host reserves the right to remove boards at will.
