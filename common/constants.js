@@ -42,7 +42,7 @@ module.exports = {
     testPublicKey: 'ab589f4dde9fce4180fcf42c7b05185b0a02a5d682e353fa39177995083e0583',
     corsOptions: {
       origin: '*',
-      methods: ['GET', 'PUT'],
+      methods: ['GET', 'PUT', 'POST'],
       allowedHeaders: ['Content-Type', 'If-Modified-Since', 'Spring-Signature', 'Spring-Version'],
       exposedHeaders: ['Content-Type', 'Last-Modified', ...Object.values(headerNames)]
     },
