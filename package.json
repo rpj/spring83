@@ -1,14 +1,14 @@
 {
   "name": "spring83",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "An implementation of the Spring 83 protocol 🌸",
   "main": "serve",
   "scripts": {
     "lint": "semistandard --fix --verbose findkey putnew serve server/*.js common/*.js client/*.js test/*.js",
     "test": "tape test/*.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Ryan Joseph <ryan@0l0.lol> and contributors",
+  "license": "MIT",
   "dependencies": {
     "@fastify/cors": "^8.0.0",
     "@noble/ed25519": "^1.6.0",
