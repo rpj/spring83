@@ -1,7 +1,5 @@
 An implementation of the [Spring 83 protocol](https://github.com/robinsloan/spring-83-spec).
 
-![A screenshot of a host running serve, showing a selected Springboard](.github/serve-ss.png)
-
 Very much a work-in-progress. This was built in reference to [`draft-20220616.md`@`0f63d3d2`](https://github.com/robinsloan/spring-83-spec/blob/0f63d3d25125106ad23428bcdaeb43b2c7840d53/draft-20220616.md).
 
 ## Setup
@@ -41,7 +39,17 @@ Writes boards into `SPRING83_CONTENT_DIR` (or `./.content` by default).
 
 If Docker is available, an image is published to Docker Hub [as <code>0l0lol/serve</code>](https://hub.docker.com/r/0l0lol/serve) or `serve` can be run from this repo directly: `docker compose up --build -d serve`.
 
-#### via docker compose
+#### POST endpoint
+
+This server implements an extension to the (current) protocol: `POST /key`.
+
+Accepting exactly the same body & header set as `PUT /key` (plus an additional optional header, detailed below), this endpoint will minify the board & auto-shorten any HTTP(S) links it finds, returning the resulting document to be re-signed and `PUT` normally by the user in possesion of the private key matching `key`. It does not modify anything server-side, only transforming and returning the original request body.
+
+Either (or both, though what's the point of that) behaviors can be disabled via the `Spring-Shortener-Disable` header, a comma-separated list of behavior to disable. The values for these are: `shorten-links`, and `minify`. Additionally, the value `shorten-board-links` can be included to disable shortening links to other Springboards, ensuring they can render inline as expected in clients such as [the Follower Sentinel](https://followersentinel.com/).
+
+#### Usage
+
+##### via docker compose
 
 `SPRING83_CONTENT_DIR_HOST` must be specified to be the host-side path for which `SPRING83_CONTENT_DIR` will map to internally.
 
@@ -49,7 +57,7 @@ Other environment variables you should set:
   * `SPRING83_FQDN`: your fully-qualified domain name (no protocol scheme, e.g. `0l0.lol`)
   * `SPRING83_CONTACT_ADDR`: a contact email address for your site
 
-#### via docker hub image
+##### via docker hub image
 
 ```
 docker run --env-file <env-file> --network host -v <local-content-path>:/content -d 0l0lol/serve:latest
@@ -65,14 +73,6 @@ SPRING83_CONTACT_ADDR=your.add@your.fqdn
 (`CONTENT_DIR` settings not necesary because...)
 
 `<local-content-path>` is the path where you want content stored on the host.
-
-#### POST endpoint
-
-This server implements an extension to the (current) protocol: `POST /key`.
-
-Accepting exactly the same body & header set as `PUT /key` (plus an additional optional header, detailed below), this endpoint will minify the board & auto-shorten any HTTP(S) links it finds, returning the resulting document to be re-signed and `PUT` normally by the user in possesion of the private key matching `key`. It does not modify anything server-side, only transforming and returning the original request body.
-
-Either (or both, though what's the point of that) behaviors can be disabled via the `Spring-Shortener-Disable` header, a comma-separated list of behavior to disable. The values for these are: `shorten-links`, and `minify`. Additionally, the value `shorten-board-links` can be included to disable shortening links to other Springboards, ensuring they can render inline as expected in clients such as [the Follower Sentinel](https://followersentinel.com/).
 
 ## Tools
 
