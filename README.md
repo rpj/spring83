@@ -52,7 +52,7 @@ Any incoming `PUT` request with either:
 * a `Via` header
 * a `<meta name="spring:share" content="false">` tag in the body
 
-will **NOT** be queued for federation.
+will **NOT** be queued for federation. [`putnew`](#putnew) (detailed below) supports adding the required meta tag with `--doNotShare true`.
 
 The response to a successful `PUT` request that _lacks_ one of the above will include the `spring-federated-to` header, the value of which is a comma-separated list of external hosts
 that the board has been _queued_ to be shared with.
