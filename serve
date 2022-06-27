@@ -49,6 +49,7 @@ async function main () {
     scheme = 'http';
   }
 
+  app.register(require('fastify-favicon'), { path: path.join(__dirname, 'client') });
   app.addContentTypeParser('text/html', { parseAs: 'string' }, (req, body, done) => done(null, body));
   await routes.attach(app, knownKeys, fqdn, contentDir, contactAddr, scheme);
   await app.listen(listenSpec);

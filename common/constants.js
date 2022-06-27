@@ -30,7 +30,7 @@ module.exports = {
       notFoundTmpl: '404.tmpl.html',
       testKeyTmpl: 'testkey.tmpl.html',
       embedJsContent: 'embed.js',
-      embedJSONExample: 'embedded-json-example.tmpl.html'
+      embedJSONExample: 'embedded-json-example.tmpl.html',
     },
     defaultContentPath: '.content',
     defaultFQDN: 'example.com',
