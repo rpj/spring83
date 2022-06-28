@@ -6,6 +6,7 @@ const headerNames = {
   federatedTo: 'spring-federated-to'
 };
 
+const knownS83Hosts = ['bogbody.biz', '0l0.lol', 'spring83.kindrobot.ca', 'spring83.rkas.net', 'spring83.mozz.us', 'lol.0l0.lol'];
 const embeddedJsonExampleBoardKey = '808b9f782c590df9f0f5c8052117a4db96c079a128d871cd4cd3e73cc83e0523';
 
 module.exports = {
@@ -30,7 +31,7 @@ module.exports = {
       notFoundTmpl: '404.tmpl.html',
       testKeyTmpl: 'testkey.tmpl.html',
       embedJsContent: 'embed.js',
-      embedJSONExample: 'embedded-json-example.tmpl.html',
+      embedJSONExample: 'embedded-json-example.tmpl.html'
     },
     defaultContentPath: '.content',
     defaultFQDN: 'example.com',
@@ -62,12 +63,12 @@ module.exports = {
       enabled: true,
       dbFileName: 'shortener.sqlite3',
       idSize: 4,
-      knownS83Hosts: ['bogbody.biz', '0l0.lol', 'spring83.kindrobot.ca', 'spring83.rkas.net', 'spring83.mozz.us']
+      knownS83Hosts
     },
     federate: {
       rateLimitMs: 10,
       // make sure your FQDN matches one of these or you'll federate to yourself!
-      knownS83Hosts: ['lol.0l0.lol', '0l0.lol', 'spring83.kindrobot.ca'],
+      knownS83Hosts,
       ignorableStatus: [409, 502]
     }
   })
