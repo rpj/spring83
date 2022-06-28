@@ -81,10 +81,9 @@
 
         [...document.getElementsByTagName('a')].filter((x) => x.dataset.s83Key).forEach((e) =>
           e.addEventListener('click', async (ele) => {
-            const { containerElement } = await embedSpringBoard(e.dataset.s83Key, 'board');
+	    const { containerElement } = await embedSpringBoard(e.dataset.s83Key, 'board', { boardIdEleId: 'bid' });
 
             containerElement.parentElement.style.display = 'inline-flex';
-            boardIdEle.textContent = e.dataset.s83Key;
 
             e.classList.add('sel');
             [...document.getElementsByTagName('a')].filter((x) => x.dataset.s83Key !== e.dataset.s83Key)

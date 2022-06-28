@@ -29,7 +29,7 @@ const embedKindrobotBoard = embedBoardForcedHost.bind(null, 'https://spring83.ki
             and array of those objects in the order they were found in the document
 */
 async function embedSpringBoard (pubkey, contEleId, options = {}) {
-  const { springHost, intContTagType, embedMode } = { ...defaultOptions, ...options };
+  const { springHost, intContTagType, embedMode, boardIdEleId } = { ...defaultOptions, ...options };
 
   const res = await fetch(`${springHost}/${pubkey}`);
   if (res.ok) {
@@ -54,6 +54,7 @@ async function embedSpringBoard (pubkey, contEleId, options = {}) {
         return;
       }
 
+      fixupBoardLinks(parsedDoc, contEleId, options);
       const embeddedJson = parseCommentsForJson(parsedDoc);
       const upDate = new Date(Date.parse(res.headers.get('last-modified')));
 
@@ -69,6 +70,11 @@ async function embedSpringBoard (pubkey, contEleId, options = {}) {
           cont.appendChild(targetNode);
         } else {
           cont.innerHTML = body;
+        }
+
+        const boardIdEle = document.getElementById(boardIdEleId);
+        if (boardIdEle) {
+          boardIdEle.textContent = pubkey;
         }
 
         s83.shadowRoot.appendChild(cont);
@@ -87,6 +93,39 @@ async function embedSpringBoard (pubkey, contEleId, options = {}) {
 
 async function embedBoardForcedHost (springHost, pubkey, contEleId, options = {}) {
   return embedSpringBoard(pubkey, contEleId, { ...options, springHost });
+}
+
+const knownS83Hosts = ['bogbody.biz', '0l0.lol', 'spring83.kindrobot.ca', 'spring83.rkas.net', 'spring83.mozz.us', 'lol.0l0.lol'];
+const keyMatchRegex = /83e(0[1-9]|1[0-2])(\d\d)$/;
+
+function fixupBoardLinks (parentNode, contEleId, options) {
+  for (const child of parentNode.childNodes) {
+    if (child.tagName === 'A') {
+      const checkUrl = new URL(child.attributes.href.value);
+      if (!knownS83Hosts.includes(checkUrl.host)) {
+        return;
+      }
+
+      const s83Key = checkUrl.pathname.replace(/^\//, '');
+      if (s83Key.length !== 64) {
+        return;
+      }
+
+      if (!s83Key.match(keyMatchRegex)) {
+        return;
+      }
+
+      child.addEventListener('click', (e) => {
+        e.preventDefault();
+        embedSpringBoard(s83Key, contEleId, { ...options, springHost: checkUrl.origin });
+        return false;
+      });
+    }
+
+    if (child.childNodes.length > 0) {
+      fixupBoardLinks(child, contEleId, options);
+    }
+  }
 }
 
 function parseCommentsForJson (parentNode, retList = []) {
