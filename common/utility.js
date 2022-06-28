@@ -62,25 +62,27 @@ async function boardExistsLocally (contentDir, pubKey) {
   }))).every(x => x === true);
 }
 
-// 'strict' only allows keys that are usable *now* to match
+// 'strict' is no longer used but left in because i used STUPIDLY allowed a
+// defaulted parameter in the middle of the f'ing set, and i'm too lazy to
+// go hunt down all the call sites right now. THIS IS WHY YOU DON'T DO THAT!
 function pubKeyHexIsValid (pubKeyHex, strict = false, injectDate) {
   const match = pubKeyHex.match(constants.keyMatchRegex);
 
   if (match && match.length === 3) {
     const monthDigits = Number.parseInt(match[1]);
-    const lastTwoDigitsNum = Number.parseInt(match[2]);
+    const yearDigits = Number.parseInt(match[2]);
 
-    if (Number.isNaN(monthDigits) || Number.isNaN(lastTwoDigitsNum)) {
+    if (Number.isNaN(monthDigits) || Number.isNaN(yearDigits)) {
       return false;
     }
 
-    const curYearTwoDigit = ((injectDate || new Date()).getYear() - 100);
+    const pastExpiryDate = new Date(`20${yearDigits - 2}-${monthDigits}-01`);
+    const adjYearDigits = yearDigits + (monthDigits === 12 ? 1 : 0);
+    const adjMonthDigits = (monthDigits === 12 ? 0 : monthDigits) + 1;
+    const futExpiryDate = new Date(`20${adjYearDigits}-${String(adjMonthDigits).padStart(2, '0')}-01`);
+    const now = injectDate || new Date();
 
-    if (!(lastTwoDigitsNum > curYearTwoDigit - 2 && lastTwoDigitsNum <= curYearTwoDigit + 1)) {
-      return false;
-    }
-
-    if (strict && lastTwoDigitsNum !== curYearTwoDigit + 1) {
+    if (now < pastExpiryDate || now > futExpiryDate) {
       return false;
     }
 
