@@ -22,10 +22,12 @@ const {
   getPublicBoards,
   applyGenericGETReplyHeaders
 } = require('./content');
+let qrcodeRequestHandler = require('./qrcode');
 
 async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
-  const { rootTmpl, notFoundTmpl, testKeyTmpl, embedJsContent, embedJSONExample } = await loadClientFiles();
+  const { rootTmpl, notFoundTmpl, testKeyTmpl, embedJsContent, embedJSONExample, qrcodeTmpl } = await loadClientFiles();
   const shortener = await require('./shortener').init(contentDir, app);
+  qrcodeRequestHandler = qrcodeRequestHandler.bind(null, fqdn, qrcodeTmpl);
 
   app.get(`/${constants.clientFiles.embedJsContent}`, (req, reply) => {
     reply.code(200);
@@ -258,8 +260,20 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
     return body;
   };
 
+  app.get('/:key.png', async (req, reply) => {
+    req.headers['content-type'] = 'image/png';
+    return qrcodeRequestHandler(req, reply);
+  });
+
+  app.get('/qrcode/:key', async (req, reply) => {
+    return qrcodeRequestHandler(req, reply);
+  });
+
   app.get('/:key', async (req, reply) => {
     if (req.params.key?.length === 64) {
+      if (req.headers['content-type'] === 'image/png') {
+        return qrcodeRequestHandler(req, reply);
+      }
       return getBoard(req, reply);
     } else if (constants.shortener.enabled) {
       const resolved = await shortener.resolve(req.params.key);

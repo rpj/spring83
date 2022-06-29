@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style type="text/css">
+			#qrcode {
+				scale: 2;
+				transform: translateX(50px) translateY(50px);
+			}
+		</style>
+	</head>
+	<body>
+		<h2>Decoded:</h2>
+		<div id="qrcode_decode_result"></div>
+		<img id="qrcode" src="{{ qrcodeDataUrlBase64 }}">
+	</body>
+	<script src="https://unpkg.com/qrcode-decoder"></script>
+	<script defer>
+		document.addEventListener('DOMContentLoaded', async () => {
+			const decoded = await (new QrcodeDecoder()).decodeFromImage(document.getElementById('qrcode'));
+			document.getElementById('qrcode_decode_result').textContent = decoded.data;
+		});
+	</script>
+</html>

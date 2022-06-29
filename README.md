@@ -39,32 +39,6 @@ Writes boards into `SPRING83_CONTENT_DIR` (or `./.content` by default).
 
 If Docker is available, an image is published to Docker Hub [as <code>0l0lol/serve</code>](https://hub.docker.com/r/0l0lol/serve) or `serve` can be run from this repo directly: `docker compose up --build -d serve`.
 
-#### Server federation
-
-This implementation supports an early and limited form of server federation per the discussion
-on [Issue #6](https://github.com/rpj/spring83/issues/6).
-
-Federation will not work correctly on your instance unless you have:
-* specified `SPRING83_FQDN` correctly for your setup and
-* added that FQDN to [`constants.federate.knownS83Hosts`](https://github.com/rpj/spring83/blob/main/common/constants.js#L69)
-
-Any incoming `PUT` request with either:
-* a `Via` header
-* a `<meta name="spring:share" content="false">` tag in the body
-
-will **NOT** be queued for federation. [`putnew`](#putnew) (detailed below) adds this meta tag _by default_, behavior that can be disabled with `--share true`.
-
-The response to a successful `PUT` request that _lacks_ one of the above will include the `spring-federated-to` header, the value of which is a comma-separated list of external hosts
-that the board has been _queued_ to be shared with.
-
-#### POST endpoint
-
-This server implements an extension to the (current) protocol: `POST /key`.
-
-Accepting exactly the same body & header set as `PUT /key` (plus an additional optional header, detailed below), this endpoint will minify the board & auto-shorten any HTTP(S) links it finds, returning the resulting document to be re-signed and `PUT` normally by the user in possesion of the private key matching `key`. It does not modify anything server-side, only transforming and returning the original request body.
-
-Either (or both, though what's the point of that) behaviors can be disabled via the `Spring-Shortener-Disable` header, a comma-separated list of behavior to disable. The values for these are: `shorten-links`, and `minify`. Additionally, the value `shorten-board-links` can be included to disable shortening links to other Springboards, ensuring they can render inline as expected in clients such as [the Follower Sentinel](https://followersentinel.com/).
-
 #### Usage
 
 ##### via docker compose
@@ -91,6 +65,62 @@ SPRING83_CONTACT_ADDR=your.add@your.fqdn
 (`CONTENT_DIR` settings not necesary because...)
 
 `<local-content-path>` is the path where you want content stored on the host.
+
+#### Server federation
+
+This implementation supports an early and limited form of server federation per the discussion
+on [Issue #6](https://github.com/rpj/spring83/issues/6).
+
+Federation will not work correctly on your instance unless you have:
+* specified `SPRING83_FQDN` correctly for your setup and
+* added that FQDN to [`constants.federate.knownS83Hosts`](https://github.com/rpj/spring83/blob/main/common/constants.js#L69)
+
+Any incoming `PUT` request with either:
+* a `Via` header
+* a `<meta name="spring:share" content="false">` tag in the body
+
+will **NOT** be queued for federation. [`putnew`](#putnew) (detailed below) adds this meta tag _by default_, behavior that can be disabled with `--share true`.
+
+The response to a successful `PUT` request that _lacks_ one of the above will include the `spring-federated-to` header, the value of which is a comma-separated list of external hosts
+that the board has been _queued_ to be shared with.
+
+#### POST endpoint
+
+This server implements an extension to the (current) protocol: `POST /key`.
+
+Accepting exactly the same body & header set as `PUT /key` (plus an additional optional header, detailed below), this endpoint will minify the board & auto-shorten any HTTP(S) links it finds, returning the resulting document to be re-signed and `PUT` normally by the user in possesion of the private key matching `key`. It does not modify anything server-side, only transforming and returning the original request body.
+
+Either (or both, though what's the point of that) behaviors can be disabled via the `Spring-Shortener-Disable` header, a comma-separated list of behavior to disable. The values for these are: `shorten-links`, and `minify`. Additionally, the value `shorten-board-links` can be included to disable shortening links to other Springboards, ensuring they can render inline as expected in clients such as [the Follower Sentinel](https://followersentinel.com/).
+
+#### QR Code generation
+
+The following endpoints generate a QR code of the specified Spring '83 public key, by default with no adornment.
+
+For `image/png`:
+* `GET /key` with `Content-Type: image/png`
+or
+* `GET /key.png`
+
+For `text/html` with live decode example:
+* `GET /qrcode/key`
+
+##### Query parameter options:
+
+* `full` &mdash; presence of this option generates a QR code with the full URL, not just the <i>key</i>.
+* `springHost` &mdash; the Spring '83 host to generate a QR code, defaults to this host. Just the hostname (no protocol scheme "http://").
+
+##### Examples
+
+Equivalent:
+* `curl https://0l0.lol/f539c49d389b1e141c97450cdabc83d41615303106c07f63c8975b5dc83e0623.png`
+* `curl -H 'Content-type: image/png' https://0l0.lol/f539c49d389b1e141c97450cdabc83d41615303106c07f63c8975b5dc83e0623`
+
+Different hosts:
+* https://0l0.lol/f539c49d389b1e141c97450cdabc83d41615303106c07f63c8975b5dc83e0623.png?full&springHost=bogbody.biz
+* https://0l0.lol/f539c49d389b1e141c97450cdabc83d41615303106c07f63c8975b5dc83e0623.png?full&springHost=spring83.kindrobot.ca
+
+Live-decode HTML:
+* https://0l0.lol/qrcode/f539c49d389b1e141c97450cdabc83d41615303106c07f63c8975b5dc83e0623?full&springHost=bogbody.biz
 
 ## Tools
 
