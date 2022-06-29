@@ -123,7 +123,7 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
         const ignoreBoardLinks = disabled.includes('shorten-board-links');
         const promises = [];
         parsed('a').each((idx, ele) => {
-          if (ele.attribs.href.startsWith('http')) {
+          if (ele.attribs.href?.startsWith('http')) {
             promises.push(async () => {
               const { host, pathname } = new URL(ele.attribs.href);
               if (constants.shortener.knownS83Hosts.includes(host) && pathname.indexOf('/') === 0) {
