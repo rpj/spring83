@@ -101,13 +101,20 @@ const keyMatchRegex = /83e(0[1-9]|1[0-2])(\d\d)$/;
 function fixupBoardLinks (parentNode, contEleId, options) {
   for (const child of parentNode.childNodes) {
     if (child.tagName === 'A') {
-      const checkUrl = new URL(child.attributes.href.value);
-      if (!knownS83Hosts.includes(checkUrl.host)) {
+      let checkUrl;
+      try {
+        checkUrl = new URL(child.attributes.href.value);
+      } catch (err) {
+        // invalid URL, so nothing to fixup: skip
+        continue;
+      }
+
+      if (!knownS83Hosts.includes(checkUrl?.host)) {
         return;
       }
 
-      const s83Key = checkUrl.pathname.replace(/^\//, '');
-      if (s83Key.length !== 64) {
+      const s83Key = checkUrl?.pathname.replace(/^\//, '');
+      if (s83Key?.length !== 64) {
         return;
       }
 
