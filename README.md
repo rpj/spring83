@@ -52,7 +52,7 @@ Any incoming `PUT` request with either:
 * a `Via` header
 * a `<meta name="spring:share" content="false">` tag in the body
 
-will **NOT** be queued for federation. [`putnew`](#putnew) (detailed below) supports adding the required meta tag with `--doNotShare true`.
+will **NOT** be queued for federation. [`putnew`](#putnew) (detailed below) adds this meta tag _by default_, behavior that can be disabled with `--share true`.
 
 The response to a successful `PUT` request that _lacks_ one of the above will include the `spring-federated-to` header, the value of which is a comma-separated list of external hosts
 that the board has been _queued_ to be shared with.
@@ -104,8 +104,9 @@ Boards will be minified & have HTTP(S) links shortened by default (except Spring
 Pass --no-minify and/or --no-shorten to disable these behaviors.
 To also shorten Springboard links, pass --shortenBoardLinks true
 
-To mark your board to NOT be shared with other federated servers, pass --doNotShare true
+By default, boards will be marked to NOT be shared with other federated hosts.
         This adds at least 42 bytes.
+To instead mark your board to be shared, pass: --share true
 ```
 
 Available on [Docker Hub as `0l0lol/putnew`](https://hub.docker.com/r/0l0lol/putnew/tags) to

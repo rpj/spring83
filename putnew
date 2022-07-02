@@ -14,7 +14,7 @@ const cliOpts = require('yargs/yargs')(process.argv.slice(2))
     shortenBoardLinks: false,
     minify: true,
     postHost: 'https://0l0.lol',
-    doNotShare: false
+    share: false
   })
   .parse();
 const umsDate = new Date();
@@ -37,7 +37,7 @@ async function preprocess (privKeyHex, htmlFileBytes, pubKeyHex) {
   }
 
   // append do-not-share meta tag if not present
-  if (cliOpts.doNotShare && htmlParsed('meta[name=spring:share]').length === 0) {
+  if (!cliOpts.share && htmlParsed('meta[name=spring:share]').length === 0) {
     append('<meta name="spring:share" content="false">');
   }
 
@@ -131,8 +131,9 @@ async function main () {
     console.log('\nBoards will be minified & have HTTP(S) links shortened by default (except Springboard links).');
     console.log('Pass --no-minify and/or --no-shorten to disable these behaviors.');
     console.log('To also shorten Springboard links, pass --shortenBoardLinks true');
-    console.log('\nTo mark your board to NOT be shared with other federated servers, pass --doNotShare true');
+    console.log('\nBy default, boards will be marked to NOT be shared with other federated hosts.');
     console.log('\tThis adds at least 42 bytes.');
+    console.log('To instead mark your board to be shared, pass: --share true');
     process.exit(0);
   }
 
