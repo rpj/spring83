@@ -5,7 +5,8 @@
   "main": "serve",
   "scripts": {
     "lint": "semistandard --fix --verbose findkey putnew serve server/*.js common/*.js client/*.js test/*.js",
-    "test": "tape test/*.js"
+    "test": "tape test/*.js",
+    "release": "standard-version"
   },
   "author": "Ryan Joseph <ryan@0l0.lol> and contributors",
   "license": "MIT",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "semistandard": "^16.0.1",
+    "standard-version": "^9.5.0",
     "tape": "^5.5.3"
   }
 }
