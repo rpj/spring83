@@ -33,12 +33,15 @@ async function ttlKiller (knownKeys, contentDir, app) {
     if (ttlCheck < expiry) {
       app.log.warn(`TTL expired for ${key} ${ingest}`);
       const pPrefix = path.join(contentDir, key);
-      await fs.promises.rm(pPrefix + '.html');
-      await fs.promises.rm(pPrefix + '.json');
       delete knownKeys[key];
+      try {
+        await fs.promises.rm(pPrefix + '.html');
+        await fs.promises.rm(pPrefix + '.json');
+      } catch (err) {
+        app.log.error(`removal of ${key} failed:`, err);
+      }
     } else {
       const daysTtl = Number((ttlCheck - expiry) / (1000 * 60 * 60 * 24)).toFixed(0);
-      app.log.info(`${key} (${ingest}) has ${daysTtl} days TTL`);
       knownKeys[key].metadata.daysTtl = daysTtl;
     }
   }

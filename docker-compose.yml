@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile
       target: serve
     network_mode: "host"
+    restart: "on-failure"
     environment:
       - SPRING83_FQDN=${SPRING83_FQDN}
       - SPRING83_CONTACT_ADDR=${SPRING83_CONTACT_ADDR}

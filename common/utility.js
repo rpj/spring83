@@ -22,7 +22,11 @@ async function s83Request (method, host, pubKeyHex, unmodifiedSince, sigHex, ext
     reqObj.body = htmlFileBytes;
   }
 
-  return fetch(`${host}/${pubKeyHex}`, reqObj);
+  try {
+    return await fetch(`${host}/${pubKeyHex}`, reqObj);
+  } catch (err) {
+    return { ok: false, status: -1, message: err.message, stack: err.stack };
+  }
 }
 
 async function minify (htmlFileBytes) {

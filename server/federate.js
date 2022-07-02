@@ -39,7 +39,7 @@ async function federateOne (key) {
   const { body, metadata: { headers }, ingest } = runtime.knownKeys[key];
   const unmodifiedSince = headers?.['if-unmodified-since'] || new Date(ingest).toUTCString();
 
-  return Promise.all(constants.federate.knownS83Hosts
+  const allRes = await Promise.allSettled(constants.federate.knownS83Hosts
     .filter((host) => host !== runtime.fqdn)
     .map(async (host) => {
       const res = await s83Request('PUT', 'https://' + host, key, unmodifiedSince,
@@ -47,12 +47,20 @@ async function federateOne (key) {
           via: '1.1 ' + runtime.fqdn
         }, Buffer.from(body, 'utf8'));
 
+      const trimRes = { status: res.status, host, message: res.message, stack: res.stack };
       if (!res.ok) {
         if (!constants.federate.ignorableStatus.includes(res.status)) {
           runtime.app.log.warn(`${host} federation error... requeue? ${res.status}`);
+          return { ok: false, ...trimRes };
         }
       }
+
+      return { ok: res.ok, ...trimRes };
     }));
+
+  runtime.app.log.info(`federateOne(${key}) results:`);
+  allRes.forEach((res) => runtime.app.log.info(res.ok ? `${res.host} OK` : res));
+  return allRes;
 }
 
 function init (app, contentDir, knownKeys, fqdn, dontLoop = false) {

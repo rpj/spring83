@@ -66,7 +66,7 @@ module.exports = {
       knownS83Hosts
     },
     federate: {
-      rateLimitMs: 10,
+      rateLimitMs: 2700,
       // make sure your FQDN matches one of these or you'll federate to yourself!
       knownS83Hosts,
       ignorableStatus: [409, 502]
