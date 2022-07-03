@@ -33,11 +33,32 @@ const initialPutChecks = (app) => (Object.freeze({
   'missing body or key': (req) => !req.body || !req.params.key,
   'invalid pub key': (req) => !pubKeyHexIsValid(req.params.key, constants.strictVerification),
   'missing header(s)': (req) => !allExpectedHeadersExist(expectPutHeaders, req, app),
-  'missing required <meta> tag attribute(s)': (req) => !documentHasRequiredMeta(req)
+  'missing required <time> tag attribute(s)': (req) => !documentHasRequiredMeta(req, app)
 }));
 
-function documentHasRequiredMeta (req) {
-  return Date.parse(cheerio.load(req.body)('time')?.attr()?.datetime);
+function boardTimeIsWithinWindow (boardTime, app) {
+  const now = Number(new Date());
+  const pastExpiryDate = now - (constants.boardTTLDays * 24 * 60 * 60 * 1000);
+  const futExpiryDate = Number(now) + constants.timeFudgeMs;
+  app.log.info({
+    boardTime,
+    times: [now, pastExpiryDate, futExpiryDate].map(x => new Date(x).toISOString()),
+    cond: boardTime >= pastExpiryDate && boardTime <= futExpiryDate
+  });
+  return boardTime >= pastExpiryDate && boardTime <= futExpiryDate;
+}
+
+function documentHasRequiredMeta (req, app) {
+  const timeTag = cheerio.load(req.body)('time')?.attr()?.datetime;
+  const parsedDate = Date.parse(timeTag);
+  if (!parsedDate) {
+    return null;
+  }
+
+  app.log.info({ timeTag });
+  if (boardTimeIsWithinWindow(parsedDate, app)) {
+    return parsedDate;
+  }
 }
 
 async function validateHeader (context, [header, val]) {

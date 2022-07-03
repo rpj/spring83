@@ -76,7 +76,7 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
     try {
       const { headers } = JSON.parse(await (await fs.promises.readFile(`${pathPrefix}.json`)).toString('utf8'));
       boardPostCode = 200;
-      const metaCheck = documentHasRequiredMeta(req); // check in initialPutChecks prior, so will have a value
+      const metaCheck = documentHasRequiredMeta(req, app); // check in initialPutChecks prior, so will have a value
 
       if (headers['if-unmodified-since'] && metaCheck <= Date.parse(headers['if-unmodified-since'])) {
         app.log.warn('Past if-unmodified-since');

@@ -20,7 +20,7 @@ module.exports = {
     protocolVersion: '83',
     contentType: 'text/html;charset=utf-8',
     keyMatchRegex: /83e(0[1-9]|1[0-2])(\d\d)$/,
-    unmodifiedSinceTimeFudgeMs: 6000,
+    timeFudgeMs: 6000,
     boardTTLDays: 22,
     getKeySecurityPolicies: {
       none: ['default-src', 'child-src', 'frame-src', 'prefetch-src', ' object-src'],
