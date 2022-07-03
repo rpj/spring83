@@ -306,6 +306,10 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
       version
     };
 
+    if (process.env.NODE_ENV !== 'prod') {
+      renderMap.devBanner = constants.devBanner.replaceAll('. ', '.<br/>');
+    }
+
     return mustache.render(rootTmpl, renderMap);
   });
 }

@@ -6,8 +6,12 @@ const headerNames = {
   federatedTo: 'spring-federated-to'
 };
 
-const knownS83Hosts = ['bogbody.biz', '0l0.lol', 'spring83.kindrobot.ca', 'spring83.rkas.net', 'spring83.mozz.us', 'lol.0l0.lol'];
 const embeddedJsonExampleBoardKey = '808b9f782c590df9f0f5c8052117a4db96c079a128d871cd4cd3e73cc83e0523';
+
+let knownS83Hosts = ['bogbody.biz', '0l0.lol', 'spring83.kindrobot.ca', 'spring83.rkas.net', 'spring83.mozz.us', 'lol.0l0.lol'];
+if (process.env.NODE_ENV !== 'prod') {
+  knownS83Hosts = ['0l0.lol', 'lol.0l0.lol'];
+}
 
 module.exports = {
   constants: Object.freeze({
@@ -71,6 +75,8 @@ module.exports = {
       // make sure your FQDN matches one of these or you'll federate to yourself!
       knownS83Hosts,
       ignorableStatus: [409, 502]
-    }
+    },
+    // each sentence of the dev banner will be split on rendering with <br/> tags
+    devBanner: 'This is a development &amp; testing server. It and all of its data may disappear at any time. You are welcome to use it but your boards are <i>not safe</i> here.'
   })
 };

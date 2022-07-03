@@ -94,6 +94,9 @@
     </script>
   </head>
   <body>
+    {{ #devBanner }}
+	  <h1 style="color: red; background-color: rgb(0, 0, 0, 0.8); margin: 20px; width: fit-content; padding: 20px;">{{{ devBanner }}}</h1>
+    {{ /devBanner }}
     <div id="bid"></div>
     <div id="c">
       <div id="m">
