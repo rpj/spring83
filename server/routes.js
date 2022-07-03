@@ -5,6 +5,7 @@ const path = require('path');
 const cheerio = require('cheerio');
 const mustache = require('mustache');
 const federate = require('./federate');
+const { version } = require('../package.json');
 const {
   constants,
   minify,
@@ -301,7 +302,8 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
       contactAddr,
       boards: Object.keys(knownKeys).map(keyMapper),
       pubBoards: getPublicBoards().filter(([, exists]) => exists === true).map(([key]) => key).sort().map(keyMapper),
-      federated: constants.federate.knownS83Hosts.filter((x) => x !== fqdn).map((x) => ({ host: x }))
+      federated: constants.federate.knownS83Hosts.filter((x) => x !== fqdn).map((x) => ({ host: x })),
+      version
     };
 
     return mustache.render(rootTmpl, renderMap);

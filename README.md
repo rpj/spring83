@@ -41,30 +41,7 @@ If Docker is available, an image is published to Docker Hub [as <code>0l0lol/ser
 
 #### Usage
 
-##### via docker compose
-
-`SPRING83_CONTENT_DIR_HOST` must be specified to be the host-side path for which `SPRING83_CONTENT_DIR` will map to internally.
-
-Other environment variables you should set:
-  * `SPRING83_FQDN`: your fully-qualified domain name (no protocol scheme, e.g. `0l0.lol`)
-  * `SPRING83_CONTACT_ADDR`: a contact email address for your site
-
-##### via docker hub image
-
-```
-docker run --env-file <env-file> --network host -v <local-content-path>:/content -d 0l0lol/serve:latest
-```
-
-where `<env-file>` should look like this to conform to the above:
-
-```
-SPRING83_FQDN=your.fqdn
-SPRING83_CONTACT_ADDR=your.add@your.fqdn
-```
-
-(`CONTENT_DIR` settings not necesary because...)
-
-`<local-content-path>` is the path where you want content stored on the host.
+See [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 #### Server federation
 
@@ -201,3 +178,13 @@ Randomly generates Ed25519 key pairs until one matching the specified format has
 If called with `--strict`, will _only_ return when a key pair is found that is valid _this calendar year_.
 
 The output format matches the format that [the client](https://followersentinel.com/) and will be named in the same format.
+
+## Contributing
+
+Contributions are encouraged & welcomed! See [CONTRIBUTING.md](./CONTRIBUTING.md) for process information.
+
+## License
+
+[MIT License](./LICENSE)
+
+Copyright (c) 2022 Ryan Joseph & contributors

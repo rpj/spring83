@@ -113,9 +113,16 @@
           </div>
         {{ /pubBoards.length }}
         <p>Want to be included here? <a href="mailto:include-me-{{ contactAddr }}">Drop a line</a> with your public key (in hex!) as the subject line.</p>
+        <p>
+          Illegal, abusive, discriminatory, hateful, or unethical content is not allowed.
+          The host reserves the right to remove boards at will.
+          {{ #contactAddr }}
+          <a href="mailto:{{ contactAddr }}">Contact.</a>
+          {{ /contactAddr }}
+        </p>
         {{ #federated.length }}
         <p>
-          This host is federated with:
+          <span style="font-variant: small-caps;">{{ fqdn }}</span> is federated with:
           <ul>
             {{ #federated }}
             <li><a href="https://{{ host }}" target="_blank">{{ host }}</a></li>
@@ -125,24 +132,17 @@
         </p>
         {{ /federated.length }}
         <p>
-          Illegal, abusive, discriminatory, hateful, or unethical content is not allowed.
-          The host reserves the right to remove boards at will.
-          {{ #contactAddr }}
-          <a href="mailto:{{ contactAddr }}">Contact.</a>
-          {{ /contactAddr }}
-        </p>
-        <p>
           Additional un<a href="https://github.com/robinsloan/spring-83">specified</a> functionality provided:
           <ul>
             <li>Board <a href="https://github.com/rpj/spring83/blob/main/README.md#post-endpoint">minification & link shortening</a>.</li>
-            <li>A <a href="/embed.js">utility API</a> for embedding Springboards (w/ <a href="/embedded-json-example.html">JSON extraction</a>).</li>
-            <li><a href="https://github.com/rpj/spring83/blob/main/README.md#post-endpoint#qr-code-generation">QR code generation</a> for board public keys &amp; links to.</li>
+            <li>An <a href="/embed.js">API</a> for embedding (w/ <a href="/embedded-json-example.html">JSON extraction</a>).</li>
+            <li><a href="https://github.com/rpj/spring83/blob/main/README.md#post-endpoint#qr-code-generation">QR code generation</a>.</li>
           </ul>
         </p>
         <p>
-          Source on <a href="https://github.com/rpj/spring83" target="_blank">GitHub</a> includes a 
-          multi-board, multi-host, auto-minifying <a href="https://github.com/rpj/spring83#putnew">
-          publishing tool</a> for the CLI.
+          Source on <a href="https://github.com/rpj/spring83" target="_blank">GitHub</a>.
+          This host is running <a href="https://github.com/rpj/spring83/releases/tag/v{{ version }}" target="_blank">v{{ version }}</a>.
+          <a href="https://github.com/rpj/spring83/blob/main/CHANGELOG.md" target="_blank">Changelog.</a>
         </p>
       </body>
     </div>
