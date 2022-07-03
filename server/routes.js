@@ -262,7 +262,7 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
     reply.header(constants.headerNames.signature, sig);
     reply.header('last-modified', new Date(ingest).toUTCString());
 
-    if (req.query.embed !== undefined) {
+    if (req.headers[constants.headerNames.version] || req.query.embed !== undefined) {
       return body;
     }
 
