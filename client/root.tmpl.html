@@ -67,6 +67,18 @@
     .sel {
       text-shadow: 0 0 10px #bf7bbf;
     }
+
+    #devBanner {
+      float: left;
+      position: fixed;
+      z-index: 10000;
+      right: 0;
+      width: 300px;
+      color: red; 
+      background-color: rgb(0, 0, 0, 0.8); 
+      margin: 20px; 
+      padding: 20px;
+    }
     </style>
     <script src="/embed.js"></script>
     <script defer>
@@ -81,8 +93,9 @@
 
         [...document.getElementsByTagName('a')].filter((x) => x.dataset.s83Key).forEach((e) =>
           e.addEventListener('click', async (ele) => {
-	    const { containerElement } = await embedSpringBoard(e.dataset.s83Key, 'board', { boardIdEleId: 'bid' });
+	          const { containerElement } = await embedSpringBoard(e.dataset.s83Key, 'board', { boardIdEleId: 'bid' });
 
+            document.getElementById('bid_link').href = `/${e.dataset.s83Key}`;
             containerElement.parentElement.style.display = 'inline-flex';
 
             e.classList.add('sel');
@@ -95,9 +108,9 @@
   </head>
   <body>
     {{ #devBanner }}
-	  <h1 style="color: red; background-color: rgb(0, 0, 0, 0.8); margin: 20px; width: fit-content; padding: 20px;">{{{ devBanner }}}</h1>
+	  <h1 id="devBanner">{{{ devBanner }}}</h1>
     {{ /devBanner }}
-    <div id="bid"></div>
+    <a href="" id="bid_link"><div id="bid"></div></a>
     <div id="c">
       <div id="m">
         <h1>🌸 A <a href="https://www.robinsloan.com/lab/specifying-spring-83/" target="_blank">Spring '83</a> server.</h1>

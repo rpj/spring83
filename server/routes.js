@@ -26,7 +26,10 @@ const {
 let qrcodeRequestHandler = require('./qrcode');
 
 async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
-  const { rootTmpl, notFoundTmpl, testKeyTmpl, embedJsContent, embedJSONExample, qrcodeTmpl } = await loadClientFiles();
+  const {
+    rootTmpl, notFoundTmpl, testKeyTmpl, embedJsContent,
+    embedJSONExample, qrcodeTmpl, getkeyTmpl
+  } = await loadClientFiles();
   const shortener = await require('./shortener').init(contentDir, app);
   qrcodeRequestHandler = qrcodeRequestHandler.bind(null, fqdn, qrcodeTmpl);
 
@@ -258,7 +261,12 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
     reply.code(200);
     reply.header(constants.headerNames.signature, sig);
     reply.header('last-modified', new Date(ingest).toUTCString());
-    return body;
+
+    if (req.query.embed !== undefined) {
+      return body;
+    }
+
+    return mustache.render(getkeyTmpl, { ...renderMap, body });
   };
 
   app.get('/:key.png', async (req, reply) => {
@@ -307,7 +315,7 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
     };
 
     if (process.env.NODE_ENV !== 'prod') {
-      renderMap.devBanner = constants.devBanner.replaceAll('. ', '.<br/>');
+      renderMap.devBanner = '<p>' + constants.devBanner.replaceAll('. ', '.</p><p>') + '</p>';
     }
 
     return mustache.render(rootTmpl, renderMap);

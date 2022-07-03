@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- this file "borrowed" nearly wholesale from https://bogbody.biz/, because it's good & i'm lazy. thank you Robin! -->
+<title>Board for {{ key }}</title>
+<script nonce="fea012f5-2f5e-400c-b696-f98bb6845e57" type="text/javascript">
+// https://web.dev/declarative-shadow-dom/#polyfill
+document.addEventListener("DOMContentLoaded", (e) => {
+  document.querySelectorAll("template[shadowroot]").forEach(template => {
+    const shadowRoot = template.parentNode.attachShadow({mode: "open"});
+    shadowRoot.appendChild(template.content);
+    template.remove();
+  });
+});
+</script>
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    text-rendering: optimizeLegibility;
+  }
+
+  * {
+    margin: 0;
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+
+  html {
+    font-size: 2vh; /* base rem */
+    -webkit-font-smoothing: antialiased;
+       -moz-font-smoothing: antialiased;
+            font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #fad0c4;
+
+    font-size: 1.25rem;
+    line-height: 2rem;
+  }
+
+  header {
+    font-family: sans-serif;
+    margin: 2rem 0 2rem 0;
+    color: #333;
+  }
+
+  main {
+    width: calc(80vh * 0.7071);
+    height: 80vh;
+    background-color: #eee;
+    overflow: scroll;
+    border-radius: 4px;
+  }
+
+  time {
+    display: none;
+  }
+
+  a {
+    color: #843b84;
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+<header>
+  This is a Spring &rsquo;83 board. <a href="https://github.com/robinsloan/spring-83">You can learn more about the format here.</a>
+</header>
+
+<main>
+  <template shadowroot="open">
+    <!-- default board CSS added by Follower-Sentinel -->
+    <style>
+      :host {
+        box-sizing: border-box;
+        padding: 2rem;
+      }
+      time { display: none; }
+      p, h1, h2, h3, h4, h5 { margin: 0 0 2rem 0; }
+    </style>
+
+    {{{ body }}}
+  </template>
+</main>
+</body>

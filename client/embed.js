@@ -31,7 +31,7 @@ const embedKindrobotBoard = embedBoardForcedHost.bind(null, 'https://spring83.ki
 async function embedSpringBoard (pubkey, contEleId, options = {}) {
   const { springHost, intContTagType, embedMode, boardIdEleId } = { ...defaultOptions, ...options };
 
-  const res = await fetch(`${springHost}/${pubkey}`);
+  const res = await fetch(`${springHost}/${pubkey}?embed`);
   if (res.ok) {
     const body = await res.text();
     const s83 = document.getElementById(contEleId);

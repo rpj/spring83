@@ -23,8 +23,8 @@ module.exports = {
     unmodifiedSinceTimeFudgeMs: 6000,
     boardTTLDays: 22,
     getKeySecurityPolicies: {
-      none: ['default-src', 'script-src', 'script-src-attr', 'script-src-elem',
-        'child-src', 'frame-src', 'prefetch-src', ' object-src'],
+      none: ['default-src', 'child-src', 'frame-src', 'prefetch-src', ' object-src'],
+      "self' 'nonce-fea012f5-2f5e-400c-b696-f98bb6845e57": ['script-src'],
       self: ['font-src'],
       'unsafe-inline': ['style-src'],
       'data:': ['img-src']
@@ -36,7 +36,8 @@ module.exports = {
       testKeyTmpl: 'testkey.tmpl.html',
       embedJsContent: 'embed.js',
       embedJSONExample: 'embedded-json-example.tmpl.html',
-      qrcodeTmpl: 'qrcode.tmpl.html'
+      qrcodeTmpl: 'qrcode.tmpl.html',
+      getkeyTmpl: 'getkey.tmpl.html'
     },
     defaultContentPath: '.content',
     defaultFQDN: 'example.com',
