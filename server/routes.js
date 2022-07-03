@@ -266,6 +266,8 @@ async function attach (app, knownKeys, fqdn, contentDir, contactAddr, scheme) {
       return body;
     }
 
+    // REALLY need a better way to handle this...
+    reply.header('Content-Security-Policy', reply.getHeader('Content-Security-Policy').replace('data:', "'self'"));
     return mustache.render(getkeyTmpl, { ...renderMap, body });
   };
 

@@ -70,6 +70,21 @@ document.addEventListener("DOMContentLoaded", (e) => {
     color: #843b84;
     text-decoration: none;
   }
+
+  #qr {
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    left: 3vw;
+    bottom: 3vh;
+    z-index: -999;
+  }
+
+  #qr > div > img {
+    opacity: 0.8;
+    border-radius: 7px;
+  }
 </style>
 </head>
 <body>
@@ -92,4 +107,11 @@ document.addEventListener("DOMContentLoaded", (e) => {
     {{{ body }}}
   </template>
 </main>
+
+<div id="qr">
+  <div style="margin-bottom: 2em;">
+    <img src="/{{ key }}.png?full" />
+  </div>
+</div>
+
 </body>
