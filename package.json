@@ -21,7 +21,7 @@
     "nanoid": "^3.3.4",
     "qrcode": "^1.5.0",
     "sqlite3": "^5.0.8",
-    "undici": "^5.5.1",
+    "undici": "^5.8.0",
     "yargs": "^17.5.1"
   },
   "devDependencies": {
