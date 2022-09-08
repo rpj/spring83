@@ -97,6 +97,7 @@ async function urlExists (url) {
 }
 
 async function shorten (url, idGenerator = defaultIdGen) {
+  url = encodeURI(url.trim());
   const extantShort = await urlExists(url);
   if (extantShort !== null) {
     return { shortId: extantShort, isNew: false };
