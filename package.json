@@ -14,7 +14,7 @@
     "@fastify/cors": "^8.0.0",
     "@noble/ed25519": "^1.6.0",
     "cheerio": "^1.0.0-rc.11",
-    "fastify": "^4.0.1",
+    "fastify": "^4.8.1",
     "fastify-favicon": "^4.0.0",
     "html-minifier-terser": "^7.0.0-beta.0",
     "mustache": "^4.2.0",
